@@ -4,7 +4,12 @@ from streamlit_webrtc import webrtc_streamer
 from app.services.stream_processor import VideoProcessor
 
 def run():
-    st.title("📹 Real-time Body Tracking with MediaPipe")
+    st.title("📹 Real-time AI personal trainer 🏋🏻‍♂️")
+    
+    exercise = st.radio(
+        "Choose the exercise:",
+        ('curl', 'press', 'squat')
+    )
 
     webrtc_streamer(
         key="pose-detection",
