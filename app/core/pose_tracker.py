@@ -74,98 +74,164 @@ class PoseDetector:
         """
         Counts repetitions of each exercise. Global count and stage (i.e., state) variables are updated within this function.
         """
-        global curl_counter, press_counter, squat_counter, curl_stage, press_stage, squat_stage
+        global pushup_counter, pushup_stage
 
-        if current_action == 'curl':
-            # Get coords
-            shoulder = self.get_coordinates(landmarks, 'left', 'shoulder')
-            elbow = self.get_coordinates(landmarks, 'left', 'elbow')
-            wrist = self.get_coordinates(landmarks, 'left', 'wrist')
-
-            # Calculate elbow angle
-            angle = self.calculate_angle(shoulder, elbow, wrist)
-
-            # Curl counter logic
-            if angle < 30:
-                curl_stage = "up"
-            if angle > 140 and curl_stage == 'up':
-                curl_stage = "down"
-                curl_counter += 1
-            press_stage = None
-            squat_stage = None
-
-            # Visualize joint angle
-            self.viz_joint_angle(image, angle, elbow)
-
-        elif current_action == 'press':
-            # Get coords
-            shoulder = self.get_coordinates(landmarks, 'left', 'shoulder')
-            elbow = self.get_coordinates(landmarks, 'left', 'elbow')
-            wrist = self.get_coordinates(landmarks, 'left', 'wrist')
-
-            # Calculate elbow angle
-            elbow_angle = self.calculate_angle(shoulder, elbow, wrist)
-
-            # Compute distances between joints
-            shoulder2elbow_dist = abs(math.dist(shoulder, elbow))
-            shoulder2wrist_dist = abs(math.dist(shoulder, wrist))
-
-            # Press counter logic
-            if (elbow_angle > 130) and (shoulder2elbow_dist < shoulder2wrist_dist):
-                press_stage = "up"
-            if (elbow_angle < 50) and (shoulder2elbow_dist > shoulder2wrist_dist) and (press_stage == 'up'):
-                press_stage = 'down'
-                press_counter += 1
-            curl_stage = None
-            squat_stage = None
-
-            # Visualize joint angle
-            self.viz_joint_angle(image, elbow_angle, elbow)
-
-        elif current_action == 'squat':
+        if current_action == 'pushup':
             # Get coords (left side)
-            left_shoulder = self.get_coordinates(landmarks, 'left', 'shoulder')
-            left_hip = self.get_coordinates(landmarks, 'left', 'hip')
-            left_knee = self.get_coordinates(landmarks, 'left', 'knee')
-            left_ankle = self.get_coordinates(landmarks, 'left', 'ankle')
+            left_shoulder = self.get_coordinates(landmarks, 'left', 'shoulder') # 11
+            left_hip = self.get_coordinates(landmarks, 'left', 'hip') # 23
+            left_knee = self.get_coordinates(landmarks, 'left', 'knee') # 25
+            left_ankle = self.get_coordinates(landmarks, 'left', 'ankle') # 27
+            left_wrist = self.get_coordinates(landmarks, 'left', 'wrist') # 15
+            left_elbow = self.get_coordinates(landmarks, 'left', 'elbow') # 13
 
             # Get coords (right side)
-            right_shoulder = self.get_coordinates(landmarks, 'right', 'shoulder')
-            right_hip = self.get_coordinates(landmarks, 'right', 'hip')
-            right_knee = self.get_coordinates(landmarks, 'right', 'knee')
-            right_ankle = self.get_coordinates(landmarks, 'right', 'ankle')
+            right_shoulder = self.get_coordinates(landmarks, 'right', 'shoulder') # 12
+            right_hip = self.get_coordinates(landmarks, 'right', 'hip') # 24
+            right_knee = self.get_coordinates(landmarks, 'right', 'knee') # 26
+            right_ankle = self.get_coordinates(landmarks, 'right', 'ankle') # 28
+            right_wrist = self.get_coordinates(landmarks, 'right', 'wrist') # 16
+            right_elbow = self.get_coordinates(landmarks, 'right', 'elbow') # 14
+
+            # calculate the distance between the wrists
+            wrist_distance = abs(math.dist(left_wrist, right_wrist))            
+            # calculate the distance between shoulders
+            shoulder_distance = abs(math.dist(left_shoulder, right_shoulder))
+            # calculate the distance between elbows
+            elbow_distance = abs(math.dist(left_elbow, right_elbow))
+
+            # calculate the angle between elbow, shoulder and wrist, left and right
+            left_elbow_angle = self.calculate_angle(left_shoulder, left_elbow, left_wrist)
+            right_elbow_angle = self.calculate_angle(right_shoulder, right_elbow, right_wrist)
+
+            # caluclate the angle between shoulder, hip and ankle, left and right
+            left_hip_angle = self.calculate_angle(left_shoulder, left_hip, left_ankle)
+            right_hip_angle = self.calculate_angle(right_shoulder, right_hip, right_ankle)
 
             # Calculate knee angles
-            left_knee_angle = self.calculate_angle(left_hip, left_knee, left_ankle)
+            left_knee_angle = self.calculate_angle(left_hip, left_knee, left_ankle) 
             right_knee_angle = self.calculate_angle(right_hip, right_knee, right_ankle)
 
             # Calculate hip angles
             left_hip_angle = self.calculate_angle(left_shoulder, left_hip, left_knee)
             right_hip_angle = self.calculate_angle(right_shoulder, right_hip, right_knee)
 
-            # Squat counter logic
-            thr = 165
-            if (left_knee_angle < thr) and (right_knee_angle < thr) and (left_hip_angle < thr) and (right_hip_angle < thr):
-                squat_stage = "down"
-            if (left_knee_angle > thr) and (right_knee_angle > thr) and (left_hip_angle > thr) and (right_hip_angle > thr) and (squat_stage == 'down'):
-                squat_stage = 'up'
-                squat_counter += 1
-            curl_stage = None
-            press_stage = None
+            # CHECK POSITIONS 
+            # # Squat counter logic
+            # thr = 165
+            # if (left_knee_angle < thr) and (right_knee_angle < thr) and (left_hip_angle < thr) and (right_hip_angle < thr):
+            #     squat_stage = "down"
+            # if (left_knee_angle > thr) and (right_knee_angle > thr) and (left_hip_angle > thr) and (right_hip_angle > thr) and (squat_stage == 'down'):
+            #     squat_stage = 'up'
+            #     squat_counter += 1
+            
+            # Check if shoulder distance is similar to wrist distance (within 0.95-1.05 range)
+            lower_bound_shoulder_wrist = 0.8 * wrist_distance
+            upper_bound_shoulder_wrist = 1.2 * wrist_distance
 
+            th_up = 150
+            th_down = 120
+            if  (left_hip_angle >= th_up) and (right_hip_angle >= th_up) and \
+                (left_knee_angle >= th_up) and (right_knee_angle >= th_up):
+                print('stai in posizione')
+            else:
+                print('raddrizza sto culo!!!!')
+
+            # if standing: # check con comandi vocali or counter or bohhhh
+            #     pushup_stage = None
+
+            # logica posizionamento
+            if pushup_stage == None:
+                # check positioning
+                #
+                #
+                #
+                print('inizio pushup')
+                pushup_stage = 'up'
+                print('bravo 6 apppppp!!!!')
+            # stage up
+
+
+            if pushup_stage == 'down' and (lower_bound_shoulder_wrist <= shoulder_distance <= upper_bound_shoulder_wrist) and \
+                (left_elbow_angle >= th_up) and (right_elbow_angle >= th_up):
+                # Shoulders and wrists are aligned within the specified range
+                pushup_stage = "up" 
+                print('ancora una uomo!!!!!!!!!!')
+
+            # to add the angle between elbow, shoulder and hip to check if the elbows are in the right position (30 gradi,60 gradi)
+
+            # stage down
+            if pushup_stage == 'up' and \
+                (left_elbow_angle <= th_down) and (right_elbow_angle <= th_down):
+                pushup_stage = "down"
+                pushup_counter += 1
+                print('nravo 6 daun!!!')
+                
+
+
+
+
+                
             # Visualize joint angles
             self.viz_joint_angle(image, left_knee_angle, left_knee)
             self.viz_joint_angle(image, left_hip_angle, left_hip)
+            self.viz_joint_angle(image, left_elbow_angle, left_elbow)
 
         else:
             pass
 
-        return curl_counter, press_counter, squat_counter
+        return pushup_counter
 
 # Global variables for counters and stages
-curl_counter = 0
-press_counter = 0
-squat_counter = 0
-curl_stage = None
-press_stage = None
-squat_stage = None
+pushup_counter = 0
+pushup_stage = None
+
+
+
+
+
+        # if current_action == 'curl':
+        #     # Get coords
+        #     shoulder = self.get_coordinates(landmarks, 'left', 'shoulder')
+        #     elbow = self.get_coordinates(landmarks, 'left', 'elbow')
+        #     wrist = self.get_coordinates(landmarks, 'left', 'wrist')
+
+        #     # Calculate elbow angle
+        #     angle = self.calculate_angle(shoulder, elbow, wrist)
+
+        #     # Curl counter logic
+        #     if angle < 30:
+        #         curl_stage = "up"
+        #     if angle > 140 and curl_stage == 'up':
+        #         curl_stage = "down"
+        #         curl_counter += 1
+        #     press_stage = None
+        #     squat_stage = None
+
+        #     # Visualize joint angle
+        #     self.viz_joint_angle(image, angle, elbow)
+
+        # elif current_action == 'press':
+        #     # Get coords
+        #     shoulder = self.get_coordinates(landmarks, 'left', 'shoulder')
+        #     elbow = self.get_coordinates(landmarks, 'left', 'elbow')
+        #     wrist = self.get_coordinates(landmarks, 'left', 'wrist')
+
+        #     # Calculate elbow angle
+        #     elbow_angle = self.calculate_angle(shoulder, elbow, wrist)
+
+        #     # Compute distances between joints
+        #     shoulder2elbow_dist = abs(math.dist(shoulder, elbow))
+        #     shoulder2wrist_dist = abs(math.dist(shoulder, wrist))
+
+        #     # Press counter logic
+        #     if (elbow_angle > 130) and (shoulder2elbow_dist < shoulder2wrist_dist):
+        #         press_stage = "up"
+        #     if (elbow_angle < 50) and (shoulder2elbow_dist > shoulder2wrist_dist) and (press_stage == 'up'):
+        #         press_stage = 'down'
+        #         press_counter += 1
+        #     curl_stage = None
+        #     squat_stage = None
+
+        #     # Visualize joint angle
+        #     self.viz_joint_angle(image, elbow_angle, elbow)
