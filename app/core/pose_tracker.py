@@ -126,29 +126,43 @@ class PoseDetector:
             #     squat_counter += 1
             
             # Check if shoulder distance is similar to wrist distance (within 0.95-1.05 range)
-            lower_bound_shoulder_wrist = 0.8 * wrist_distance
-            upper_bound_shoulder_wrist = 1.2 * wrist_distance
+            lower_bound_shoulder_wrist = 0.6 * wrist_distance
+            upper_bound_shoulder_wrist = 1.4 * wrist_distance
 
             th_up = 150
             th_down = 120
-            if  (left_hip_angle >= th_up) and (right_hip_angle >= th_up) and \
-                (left_knee_angle >= th_up) and (right_knee_angle >= th_up):
-                print('stai in posizione')
-            else:
-                print('raddrizza sto culo!!!!')
+            error = 0
+        # da aggiungere un controllo per vedere se l'utente è in piedi o sdraiato
+        
 
             # if standing: # check con comandi vocali or counter or bohhhh
             #     pushup_stage = None
 
-            # logica posizionamento
+            # logica posizionamento inizio pushup
             if pushup_stage == None:
+                if  (left_hip_angle >= th_up) and (right_hip_angle >= th_up) and \
+                (left_knee_angle >= th_up) and (right_knee_angle >= th_up):
+                    print('stai in posizione con il bacino')
+                    if (lower_bound_shoulder_wrist <= shoulder_distance <= upper_bound_shoulder_wrist):
+                        print('spalle e polsi sono allineati')
+                        print('inizio pushup')
+                        pushup_stage = 'up'
+                        print('bravo 6 apppppp!!!!')
+
+                    else:
+                        print('spalle e polsi NON sono allineati')
+                        if shoulder_distance < lower_bound_shoulder_wrist:
+                            print('spalle troppo vicine ai polsi')
+                        elif shoulder_distance > upper_bound_shoulder_wrist:
+                            print('spalle troppo lontane dai polsi')
+
+                else:
+                    print('raddrizza sto culo!!!!')
                 # check positioning
                 #
+                #<|diff_marker|>#
                 #
-                #
-                print('inizio pushup')
-                pushup_stage = 'up'
-                print('bravo 6 apppppp!!!!')
+               
             # stage up
 
 
@@ -163,6 +177,8 @@ class PoseDetector:
             # stage down
             if pushup_stage == 'up' and \
                 (left_elbow_angle <= th_down) and (right_elbow_angle <= th_down):
+                
+                
                 pushup_stage = "down"
                 pushup_counter += 1
                 print('nravo 6 daun!!!')
@@ -235,3 +251,8 @@ pushup_stage = None
 
         #     # Visualize joint angle
         #     self.viz_joint_angle(image, elbow_angle, elbow)
+
+
+
+
+                
