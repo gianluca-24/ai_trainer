@@ -116,6 +116,10 @@ class PoseDetector:
             left_hip_angle = self.calculate_angle(left_shoulder, left_hip, left_knee)
             right_hip_angle = self.calculate_angle(right_shoulder, right_hip, right_knee)
 
+            # Shoulder angle: elbow - shoulder - hip
+            left_shoulder_angle = self.calculate_angle(left_elbow, left_shoulder, left_hip)
+            right_shoulder_angle = self.calculate_angle(right_elbow, right_shoulder, right_hip)
+
             # CHECK POSITIONS 
             # # Squat counter logic
             # thr = 165
@@ -170,6 +174,7 @@ class PoseDetector:
                 (left_elbow_angle >= th_up) and (right_elbow_angle >= th_up):
                 # Shoulders and wrists are aligned within the specified range
                 pushup_stage = "up" 
+                pushup_counter += 1
                 print('ancora una uomo!!!!!!!!!!')
 
             # to add the angle between elbow, shoulder and hip to check if the elbows are in the right position (30 gradi,60 gradi)
@@ -177,14 +182,42 @@ class PoseDetector:
             # stage down
             if pushup_stage == 'up' and \
                 (left_elbow_angle <= th_down) and (right_elbow_angle <= th_down):
-                
-                
                 pushup_stage = "down"
-                pushup_counter += 1
-                print('nravo 6 daun!!!')
-                
+                print('bravo 6 daun!!!')
 
 
+            #########################################################
+            # ERRORS HANDLING
+            #########################################################
+            #########################################################
+            #########################################################
+
+            # if pushup_stage == None:
+            #     print('non hai iniziato il pushup')
+            #     pass
+
+            # errors while going down
+            if pushup_stage == 'up' or pushup_stage == 'down':
+                # 1. bacino troppo basso o alto
+                if (left_hip_angle < 160 or right_hip_angle < 160):
+                    print("Errore: Il bacino è troppo basso, alzalo!")
+                elif (left_hip_angle > 200 or right_hip_angle > 200):
+                    print("Errore: Il bacino è troppo alto, abbassalo!")
+
+                # 2. gomiti troppo larghi (shoulder angle)
+                if left_shoulder_angle > 100 or right_shoulder_angle > 100:
+                    print("Arms are spread wide or lifted")
+                elif left_shoulder_angle < 60 or right_shoulder_angle < 60:
+                    print("Arms are close to body")
+
+                # 3. mani troppo larghe o troppo vicine
+                if wrist_distance > shoulder_distance * 1.5:
+                    print("Errore: Le mani sono troppo larghe! Avvicinale un po'.")
+                elif wrist_distance < shoulder_distance * 0.5:
+                    print("Errore: Le mani sono troppo vicine! Allargale un po'.")
+
+            # if pushup_stage == 'down':
+            #     pass
 
 
                 
