@@ -2,55 +2,37 @@ import math
 import cv2
 import mediapipe as mp
 import numpy as np
-import pyttsx3
+import time
+
+# Global variables for counters and stages
+pushup_counter = 0
+pushup_stage = None
 
 class PoseDetector:
     def __init__(self, min_detection_confidence=0.5, min_tracking_confidence=0.5):
         self.min_detection_confidence = min_detection_confidence
         self.min_tracking_confidence = min_tracking_confidence
-        self.pose = mp.solutions.pose.Pose(min_detection_confidence=self.min_detection_confidence,
-                                           min_tracking_confidence=self.min_tracking_confidence)
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_pose = mp.solutions.pose
+        self.last_message = None
+        self.last_message_time = 0
 
-        # Initialize text-to-speech engine
-        self.tts_engine = pyttsx3.init()
-        self.tts_engine.setProperty('rate', 130)
-        self.tts_engine.setProperty('volume', 0.9)
-        voices = self.tts_engine.getProperty('voices')
-        for voice in voices:
-            if "english" in voice.name.lower() or "en" in voice.id.lower():
-                self.tts_engine.setProperty('voice', voice.id)
-                break
+    def process(self, frame_rgb):
+        # Create a fresh Pose object per call to avoid timestamp errors
+        with self.mp_pose.Pose(
+            min_detection_confidence=self.min_detection_confidence,
+            min_tracking_confidence=self.min_tracking_confidence
+        ) as pose:
+            results = pose.process(frame_rgb)
+        return results
 
-    def speak(self, message):
-        self.tts_engine.say(message)
-        self.tts_engine.runAndWait()
-
-    def detect(self, frame):
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self.pose.process(rgb)
-        if results.pose_landmarks:
-            self.mp_drawing.draw_landmarks(
-                frame, results.pose_landmarks, self.mp_pose.POSE_CONNECTIONS
-            )
+    def draw_landmarks(self, frame, pose_landmarks):
+        self.mp_drawing.draw_landmarks(
+            frame, pose_landmarks, self.mp_pose.POSE_CONNECTIONS,
+            self.mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+            self.mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2)
+        )
         return frame
-
-    def mediapipe_detection(self, image, model):
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image.flags.writeable = False
-        results = model.process(image)
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        return image, results
-
-    def draw_landmarks(self, image, results):
-        if results.pose_landmarks:
-            self.mp_drawing.draw_landmarks(
-                image, results.pose_landmarks, self.mp_pose.POSE_CONNECTIONS,
-                self.mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=2),
-                self.mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2)
-            )
 
     def calculate_angle(self, a, b, c):
         a = np.array(a)
@@ -65,9 +47,11 @@ class PoseDetector:
         return [landmarks[coord.value].x, landmarks[coord.value].y]
 
     def viz_joint_angle(self, image, angle, joint):
-        cv2.putText(image, str(int(angle)),
-                    tuple(np.multiply(joint, [640, 480]).astype(int)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
+        cv2.putText(
+            image, str(int(angle)),
+            tuple(np.multiply(joint, [image.shape[1], image.shape[0]]).astype(int)),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA
+        )
         return image
 
     def is_standing(self, landmarks):
@@ -90,7 +74,7 @@ class PoseDetector:
             if self.is_standing(landmarks):
                 pushup_stage = None
                 pushup_counter = 0
-                return pushup_counter, "⚠️ Please get into pushup position to start"
+                return pushup_counter, "Please get into pushup position to start"
 
             ls = self.get_coordinates(landmarks, 'left', 'shoulder')
             lh = self.get_coordinates(landmarks, 'left', 'hip')
@@ -107,16 +91,12 @@ class PoseDetector:
 
             wd = abs(math.dist(lw, rw))
             sd = abs(math.dist(ls, rs))
-            ed = abs(math.dist(le, re))
-
             lea = self.calculate_angle(ls, le, lw)
             rea = self.calculate_angle(rs, re, rw)
-            lha = self.calculate_angle(ls, lh, la)
-            rha = self.calculate_angle(rs, rh, ra)
-            lka = self.calculate_angle(lh, lk, la)
-            rka = self.calculate_angle(rh, rk, ra)
             lha = self.calculate_angle(ls, lh, lk)
             rha = self.calculate_angle(rs, rh, rk)
+            lka = self.calculate_angle(lh, lk, la)
+            rka = self.calculate_angle(rh, rk, ra)
             lsa = self.calculate_angle(le, ls, lh)
             rsa = self.calculate_angle(re, rs, rh)
 
@@ -127,19 +107,16 @@ class PoseDetector:
                 if ((lha >= th_up and lka >= th_up) or (rha >= th_up and rka >= th_up)):
                     if lb <= sd <= ub:
                         pushup_stage = 'up'
-                        self.speak("You can start pushing up")
-                        return 0, "You can start pushing up"
+                        return pushup_counter, "You can start pushing up"
                     else:
                         if sd < lb:
-                            error_message = "⚠️ Shoulders too close to wrists - widen your hand position"
+                            error_message = "Shoulders too close to wrists - widen your hand position"
                         elif sd > ub:
-                            error_message = "⚠️ Shoulders too far from wrists - bring your hands closer"
-                        self.speak(error_message)
-                        return 0, error_message
+                            error_message = "Shoulders too far from wrists - bring your hands closer"
+                        return pushup_counter, error_message
                 else:
-                    error_message = "⚠️ Keep your body straight - align your hips!"
-                    self.speak(error_message)
-                    return 0, error_message
+                    error_message = "Keep your body straight - align your hips!"
+                    return pushup_counter, error_message
 
             if pushup_stage == 'down' and lb <= sd <= ub and (lea >= th_up or rea >= th_up):
                 pushup_stage = "up"
@@ -150,27 +127,34 @@ class PoseDetector:
 
             if not self.is_standing(landmarks) and pushup_stage in ['up', 'down']:
                 if (lha < 160 or rha < 160):
-                    error_message = "⚠️ Hips too low - raise your hips!"
+                    error_message = "Hips too low - raise your hips!"
                 elif (lha > 200 or rha > 200):
-                    error_message = "⚠️ Hips too high - lower your hips!"
+                    error_message = "Hips too high - lower your hips!"
                 elif lsa > 100 or rsa > 100:
-                    error_message = "⚠️ Arms too wide - keep elbows closer to body"
+                    error_message = "Arms too wide - keep elbows closer to body"
                 elif lsa < 60 or rsa < 60:
-                    error_message = "⚠️ Arms too close - widen elbow position slightly"
+                    error_message = "Arms too close - widen elbow position slightly"
                 elif wd > sd * 1.5:
-                    error_message = "⚠️ Hands too wide - bring them closer"
+                    error_message = "Hands too wide - bring them closer"
                 elif wd < sd * 0.5:
-                    error_message = "⚠️ Hands too close - widen your grip"
+                    error_message = "Hands too close - widen your grip"
                 if error_message:
-                    self.speak(error_message)
-                    return 0, error_message
+                    return pushup_counter, error_message
 
             self.viz_joint_angle(image, lka, lk)
             self.viz_joint_angle(image, lha, lh)
             self.viz_joint_angle(image, lea, le)
 
-        return pushup_counter, error_message
+        return pushup_counter, None
 
-# Global variables for counters and stages
-pushup_counter = 0
-pushup_stage = None
+    def should_speak(self, message, delay=5):
+        current_time = time.time()
+        if self.last_message is None:
+            self.last_message = message
+            self.last_message_time = current_time
+            return True
+        if message != self.last_message or (current_time - self.last_message_time > delay):
+            self.last_message = message
+            self.last_message_time = current_time
+            return True
+        return False

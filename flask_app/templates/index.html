@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pose Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Mediapipe JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; text-align: center;}
+    h1 { color: #333; margin-top: 16px; }
+    #video-container { position: relative; display: inline-block; margin-top: 12px; width: 100vw; max-width: 400px; aspect-ratio: 4 / 3;}
+    #output { width: 100%; border: 4px solid #333; border-radius: 16px; background: #000; box-shadow: 0 4px 24px 0 #0001;}
+    #feedback { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,0.92); padding: 10px 16px; border-radius: 12px; font-size: 16px; color: #222; text-align: left; max-width: 220px; min-height: 32px; z-index: 10; box-shadow: 0 2px 8px 0 #0002;}
+    #rep-count { position: absolute; top: 12px; right: 12px; font-size: 18px; background: rgba(0,0,0,0.65); color: #fff; padding: 8px 18px; border-radius: 12px; z-index: 10; letter-spacing: 1px; font-weight: bold;}
+    #controls { position: absolute; bottom: 12px; right: 12px; z-index: 10; }
+    select { font-size: 15px; padding: 7px 16px; border-radius: 8px; border: 1px solid #aaa; background-color: #fff; color: #333; font-weight: bold;}
+    @media (max-width: 700px) {
+      #video-container { max-width: 98vw; }
+      #output { border-width: 2.5px; }
+      #feedback { font-size: 13px; max-width: 150px; padding: 7px 10px;}
+      #rep-count { font-size: 15px; padding: 6px 12px;}
+      select { font-size: 13px; padding: 6px 8px;}
+    }
+  </style>
+</head>
+<body>
+  <h1>Pose Tracker</h1>
+  <div id="video-container">
+    <canvas id="output" width="400" height="300"></canvas>
+    <div id="feedback"></div>
+    <div id="rep-count">Reps: 0</div>
+    <div id="controls">
+      <select id="exercise-select">
+        <option value="pushup">Push-Up</option>
+        <option value="squat">Squat</option>
+      </select>
+    </div>
+  </div>
+  <video id="video" autoplay playsinline muted style="display:none"></video>
+  <script>
+    // Unlock voice on first user tap for all phones
+    function unlockSpeech() {
+      try {
+        const dummy = new SpeechSynthesisUtterance('');
+        speechSynthesis.speak(dummy);
+        speechSynthesis.cancel();
+      } catch(e) {}
+    }
+    window.addEventListener("click", unlockSpeech, {once: true});
+    window.addEventListener("touchstart", unlockSpeech, {once: true});
+
+    // --- UI State ---
+    let pushupCounter = 0;
+    let pushupStage = null;
+    let squatCounter = 0;
+    let squatStage = "up";
+    let currentExercise = "pushup";
+    let lastMsg = null;
+    let lastMsgTime = 0;
+    const FEEDBACK_DELAY = 5000; // ms
+
+    function angle(a, b, c) {
+      const ab = [a[0]-b[0], a[1]-b[1]];
+      const cb = [c[0]-b[0], c[1]-b[1]];
+      const dot = ab[0]*cb[0] + ab[1]*cb[1];
+      const magA = Math.hypot(...ab), magC = Math.hypot(...cb);
+      return Math.abs((Math.acos(dot / (magA*magC))) * 180 / Math.PI);
+    }
+
+    function getCoord(landmarks, side, joint) {
+      const idxs = {
+        "left_shoulder": 11, "right_shoulder": 12,
+        "left_hip": 23, "right_hip": 24,
+        "left_knee": 25, "right_knee": 26,
+        "left_ankle": 27, "right_ankle": 28,
+        "left_wrist": 15, "right_wrist": 16,
+        "left_elbow": 13, "right_elbow": 14
+      };
+      return [landmarks[idxs[side+"_"+joint]].x, landmarks[idxs[side+"_"+joint]].y];
+    }
+
+    function isStanding(landmarks) {
+      const ls_y = landmarks[11].y, rs_y = landmarks[12].y;
+      const lh_y = landmarks[23].y, rh_y = landmarks[24].y;
+      const la_y = landmarks[27].y, ra_y = landmarks[28].y;
+      const shoulder_y = (ls_y + rs_y)/2;
+      const hip_y = (lh_y + rh_y)/2;
+      const ankle_y = (la_y + ra_y)/2;
+      return (hip_y - shoulder_y) > 0.15 && (ankle_y - hip_y) > 0.15;
+    }
+
+    function countPushup(landmarks) {
+      let errorMessage = null;
+      const ls = getCoord(landmarks, "left", "shoulder");
+      const lh = getCoord(landmarks, "left", "hip");
+      const lk = getCoord(landmarks, "left", "knee");
+      const la = getCoord(landmarks, "left", "ankle");
+      const lw = getCoord(landmarks, "left", "wrist");
+      const le = getCoord(landmarks, "left", "elbow");
+      const rs = getCoord(landmarks, "right", "shoulder");
+      const rh = getCoord(landmarks, "right", "hip");
+      const rk = getCoord(landmarks, "right", "knee");
+      const ra = getCoord(landmarks, "right", "ankle");
+      const rw = getCoord(landmarks, "right", "wrist");
+      const re = getCoord(landmarks, "right", "elbow");
+
+      const wd = Math.abs(Math.hypot(lw[0]-rw[0], lw[1]-rw[1]));
+      const sd = Math.abs(Math.hypot(ls[0]-rs[0], ls[1]-rs[1]));
+      const lea = angle(ls, le, lw);
+      const rea = angle(rs, re, rw);
+      const lha = angle(ls, lh, lk);
+      const rha = angle(rs, rh, rk);
+      const lka = angle(lh, lk, la);
+      const rka = angle(rh, rk, ra);
+      const lsa = angle(le, ls, lh);
+      const rsa = angle(re, rs, rh);
+
+      const lb = 0.5 * wd, ub = 1.5 * wd;
+      const th_up = 150, th_down = 120;
+
+      if (isStanding(landmarks)) {
+        pushupStage = null;
+        pushupCounter = 0;
+        return [pushupCounter, "Please get into pushup position to start"];
+      }
+
+      if (pushupStage === null) {
+        if ((lha >= th_up && lka >= th_up) || (rha >= th_up && rka >= th_up)) {
+          if (lb <= sd && sd <= ub) {
+            pushupStage = 'up';
+            return [pushupCounter, "You can start pushing up"];
+          } else {
+            if (sd < lb) errorMessage = "Shoulders too close to wrists - widen your hand position";
+            else if (sd > ub) errorMessage = "Shoulders too far from wrists - bring your hands closer";
+            return [pushupCounter, errorMessage];
+          }
+        } else {
+          errorMessage = "Keep your body straight - align your hips!";
+          return [pushupCounter, errorMessage];
+        }
+      }
+
+      if (pushupStage === 'down' && lb <= sd && sd <= ub && (lea >= th_up || rea >= th_up)) {
+        pushupStage = "up";
+        pushupCounter += 1;
+      }
+
+      if (pushupStage === 'up' && (lea <= th_down || rea <= th_down)) {
+        pushupStage = "down";
+      }
+
+      if (!isStanding(landmarks) && (pushupStage === 'up' || pushupStage === 'down')) {
+        if (lha < 160 || rha < 160) errorMessage = "Hips too low - raise your hips!";
+        else if (lha > 200 || rha > 200) errorMessage = "Hips too high - lower your hips!";
+        else if (lsa > 100 || rsa > 100) errorMessage = "Arms too wide - keep elbows closer to body";
+        else if (lsa < 60 || rsa < 60) errorMessage = "Arms too close - widen elbow position slightly";
+        else if (wd > sd * 1.5) errorMessage = "Hands too wide - bring them closer";
+        else if (wd < sd * 0.5) errorMessage = "Hands too close - widen your grip";
+        if (errorMessage) return [pushupCounter, errorMessage];
+      }
+
+      return [pushupCounter, null];
+    }
+
+    function countSquat(landmarks) {
+      // Simple squat logic
+      const hip = [landmarks[23].x, landmarks[23].y];
+      const knee = [landmarks[25].x, landmarks[25].y];
+      const ankle = [landmarks[27].x, landmarks[27].y];
+      const kneeAngle = angle(hip, knee, ankle);
+      let feedback = "";
+      if (squatStage === "up" && kneeAngle < 100) {
+        squatStage = "down";
+        feedback = "Good! Go up!";
+      }
+      if (squatStage === "down" && kneeAngle > 160) {
+        squatStage = "up";
+        squatCounter += 1;
+        feedback = "Rep counted!";
+      }
+      return [squatCounter, feedback];
+    }
+
+    function speak(msg) {
+      const now = Date.now();
+      if (!msg) return;
+      if (msg !== lastMsg || (now - lastMsgTime > FEEDBACK_DELAY)) {
+        lastMsg = msg;
+        lastMsgTime = now;
+        const utterance = new SpeechSynthesisUtterance(msg);
+        utterance.lang = "en-US";
+        speechSynthesis.speak(utterance);
+      }
+    }
+
+    function onResults(results) {
+      const canvas = document.getElementById("output");
+      const ctx = canvas.getContext('2d');
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+      let reps = 0, feedback = "";
+      if (results.poseLandmarks) {
+        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
+        drawLandmarks(ctx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2});
+        if (currentExercise === "pushup") {
+          [reps, feedback] = countPushup(results.poseLandmarks);
+        } else {
+          [reps, feedback] = countSquat(results.poseLandmarks);
+        }
+        document.getElementById("rep-count").innerText = `Reps: ${reps}`;
+        document.getElementById("feedback").innerText = feedback ? feedback : "";
+        if (feedback) speak(feedback);
+      } else {
+        document.getElementById("feedback").innerText = "Move into frame";
+      }
+      ctx.restore();
+    }
+
+    document.getElementById("exercise-select").addEventListener("change", (e) => {
+      currentExercise = e.target.value;
+      // Reset state
+      pushupStage = null; pushupCounter = 0;
+      squatStage = "up"; squatCounter = 0;
+      document.getElementById("rep-count").innerText = "Reps: 0";
+      document.getElementById("feedback").innerText = "";
+    });
+
+    // --- Camera/pose setup ---
+    const videoElement = document.getElementById('video');
+    const pose = new Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
+    pose.setOptions({
+      modelComplexity: 0,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+    pose.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => { await pose.send({image: videoElement}); },
+      width: 400, height: 300
+    });
+    camera.start();
+  </script>
+</body>
+</html>
