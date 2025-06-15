@@ -12,6 +12,18 @@ class PoseDetector:
         self.pose = mp.solutions.pose.Pose(min_detection_confidence=self.min_detection_confidence, min_tracking_confidence=self.min_tracking_confidence)
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_pose = mp.solutions.pose
+        
+        # Initialize text-to-speech engine
+        self.tts_engine = pyttsx3.init()
+        self.tts_engine.setProperty('rate', 130)
+        self.tts_engine.setProperty('volume', 0.9)
+        
+        # Set English voice
+        voices = self.tts_engine.getProperty('voices')
+        for voice in voices:
+            if "english" in voice.name.lower() or "en" in voice.id.lower():
+                self.tts_engine.setProperty('voice', voice.id)
+                break
 
     def detect(self, frame):
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -70,21 +82,13 @@ class PoseDetector:
                     tuple(np.multiply(joint, [640, 480]).astype(int)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
         return image
-    # Initialize text-to-speech engine
-    tts_engine = pyttsx3.init()
-    tts_engine.setProperty('rate', 130)
-    tts_engine.setProperty('volume', 0.9)
 
-    voices = engine.getProperty('voices')
-    for voice in voices:
-        if "english" in voice.name.lower() or "en" in voice.id.lower():
-            engine.setProperty('voice', voice.id)
-            break
-
-    
-    def speak(message):
-        tts_engine.say(message)
-        tts_engine.runAndWait()
+    def speak(self, message):
+        """
+        Speaks the given message using text-to-speech
+        """
+        self.tts_engine.say(message)
+        self.tts_engine.runAndWait()
 
     def is_standing(self, landmarks):
         """
@@ -121,13 +125,14 @@ class PoseDetector:
         global pushup_counter, pushup_stage
         error_message = None
 
-
         if current_action == 'pushup':
             # First check if person is standing
             if self.is_standing(landmarks):
                 pushup_stage = None
                 pushup_counter = 0
-                return pushup_counter, "⚠️ Please get into pushup position to start"
+                error_message = "⚠️ Please get into pushup position to start"
+                self.speak(error_message)
+                return pushup_counter, error_message
 
             # Get coords (left side)
             left_shoulder = self.get_coordinates(landmarks, 'left', 'shoulder') # 11
@@ -172,12 +177,13 @@ class PoseDetector:
             left_shoulder_angle = self.calculate_angle(left_elbow, left_shoulder, left_hip)
             right_shoulder_angle = self.calculate_angle(right_elbow, right_shoulder, right_hip)
             
-            # Check if shoulder distance is similar to wrist distance (within 0.95-1.05 range)
+            # Check if shoulder distance is similar to wrist distance
             lower_bound_shoulder_wrist = 0.5 * wrist_distance
             upper_bound_shoulder_wrist = 1.5 * wrist_distance
 
             th_up = 150
             th_down = 120
+            
             # logica posizionamento inizio pushup
             if pushup_stage is None:
                 if ((left_hip_angle >= th_up) and (left_knee_angle >= th_up)) or \
@@ -185,23 +191,21 @@ class PoseDetector:
 
                     if lower_bound_shoulder_wrist <= shoulder_distance <= upper_bound_shoulder_wrist:
                         pushup_stage = 'up'
-                        speak("You can start pushing up") 
-                        return 0, "You can start pushing up"
-
+                        error_message = "You can start pushing up"
+                        self.speak(error_message)
+                        return pushup_counter, error_message
                     else:
                         if shoulder_distance < lower_bound_shoulder_wrist:
                             error_message = "⚠️ Shoulders too close to wrists - widen your hand position"
                         elif shoulder_distance > upper_bound_shoulder_wrist:
                             error_message = "⚠️ Shoulders too far from wrists - bring your hands closer"
-                        speak(error_message) 
-                        return 0, error_message
-
+                        self.speak(error_message)
+                        return pushup_counter, error_message
                 else:
                     error_message = "⚠️ Keep your body straight - align your hips!"
-                    speak(error_message) 
-                    return 0, error_message
+                    self.speak(error_message)
+                    return pushup_counter, error_message
 
-               
             # stage up
             if pushup_stage == 'down' and \
                 (lower_bound_shoulder_wrist <= shoulder_distance <= upper_bound_shoulder_wrist) and \
@@ -214,9 +218,6 @@ class PoseDetector:
                 ((left_elbow_angle <= th_down) or (right_elbow_angle <= th_down)):
                 pushup_stage = "down"
 
- 
-            
-
             # Error handling during exercise (only if not standing)
             if not self.is_standing(landmarks) and (pushup_stage == 'up' or pushup_stage == 'down'):
                 error_message = None  
@@ -226,13 +227,11 @@ class PoseDetector:
                     error_message = "⚠️ Hips too low - raise your hips!"
                 elif (left_hip_angle > 200 or right_hip_angle > 200):
                     error_message = "⚠️ Hips too high - lower your hips!"
-
                 # Check elbow position
                 elif left_shoulder_angle > 100 or right_shoulder_angle > 100:
                     error_message = "⚠️ Arms too wide - keep elbows closer to body"
                 elif left_shoulder_angle < 60 or right_shoulder_angle < 60:
                     error_message = "⚠️ Arms too close - widen elbow position slightly"
-
                 # Check hand position
                 elif wrist_distance > shoulder_distance * 1.5:
                     error_message = "⚠️ Hands too wide - bring them closer"
@@ -240,12 +239,8 @@ class PoseDetector:
                     error_message = "⚠️ Hands too close - widen your grip"
 
                 if error_message:
-                    speak(error_message)
-                    return 0, error_message
-
-
-
-
+                    self.speak(error_message)
+                    return pushup_counter, error_message
 
             # Visualize joint angles
             self.viz_joint_angle(image, left_knee_angle, left_knee)
