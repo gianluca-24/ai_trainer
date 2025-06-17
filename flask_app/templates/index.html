@@ -532,7 +532,16 @@
       document.getElementById('workout-config').classList.remove('active');
       speak(`Starting workout with ${totalSets} sets of ${repsPerSet} reps and ${REST_DURATION/1000} seconds rest`);
       updateSetCounter();
-      updateRecap(); // Initialize recap when workout starts
+      // Reset rep counter for first set
+      if (currentExercise === "pushup") {
+        pushupCounter = 0;
+        pushupStage = null;
+      } else {
+        squatCounter = 0;
+        squatStage = "up";
+      }
+      document.getElementById("rep-count").innerText = "Reps: 0";
+      updateRecap();
       if (isListening) {
         toggleVoiceControl();
       }
@@ -603,7 +612,7 @@
           restStartTime = Date.now();
           speak(`Set complete! Take a ${REST_DURATION/1000} second rest before starting set ${currentSet}`);
           updateSetCounter();
-          updateRecap(); // Update recap when set is completed
+          updateRecap();
           // Reset rep counter for new set
           if (currentExercise === "pushup") {
             pushupCounter = 0;
@@ -612,10 +621,11 @@
             squatCounter = 0;
             squatStage = "up";
           }
+          document.getElementById("rep-count").innerText = "Reps: 0";
         } else {
           speak("Workout complete! Great job!");
           workoutStarted = false;
-          updateRecap(); // Update recap when workout is complete
+          updateRecap();
         }
       }
     }
@@ -629,6 +639,8 @@
           speak(endMessage);
           document.getElementById("feedback").innerText = endMessage;
           document.getElementById('rest-timer').classList.remove('active');
+          // Ensure rep counter is at 0 when rest period ends
+          document.getElementById("rep-count").innerText = "Reps: 0";
         } else {
           const remainingSeconds = Math.ceil((REST_DURATION - restTimeElapsed) / 1000);
           
@@ -819,6 +831,11 @@
           return [pushupCounter, errorMessage];
         }
       }
+
+      if (rightShoulderToRightAnkle > 0.35 || leftShoulderToLeftAnkle > 0.35) {
+        pushupStage = null;
+        return [pushupCounter, "Get into pushup position!" ];
+      } 
 
       if (pushupStage === 'down' && (lea >= th_up || rea >= th_up)) {
         pushupStage = "up";
