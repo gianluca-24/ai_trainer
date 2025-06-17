@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Trainer AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: #333;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h2 {
+            margin: 0;
+        }
+        .logout-btn {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            background: #dc3545;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        .profile-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .profile-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .profile-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .info-group {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .info-group h3 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+        .info-group p {
+            margin: 0;
+            color: #666;
+        }
+        .start-training {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 2rem auto;
+            padding: 1.2rem;
+            background: #4CAF50;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .start-training:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Trainer AI</h2>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+    <div class="profile-container">
+        <div class="profile-header">
+            <h1>Welcome, {{ user.username }}!</h1>
+        </div>
+        <div class="profile-info">
+            <div class="info-group">
+                <h3>Personal Information</h3>
+                <p>Email: {{ user.email }}</p>
+                <p>Age: {{ user.age }}</p>
+            </div>
+            <div class="info-group">
+                <h3>Physical Stats</h3>
+                <p>Height: {{ user.height }} cm</p>
+                <p>Weight: {{ user.weight }} kg</p>
+            </div>
+        </div>
+        <a href="{{ url_for('index') }}" class="start-training">Start Workout</a>
+    </div>
+</body>
+</html> 

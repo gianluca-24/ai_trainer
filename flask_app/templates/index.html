@@ -11,27 +11,94 @@
   <style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; text-align: center;}
     h1 { color: #333; margin-top: 16px; }
-    #video-container { position: relative; display: inline-block; margin-top: 12px; width: 100vw; max-width: 400px; aspect-ratio: 4 / 3;}
+    #video-container { position: relative; display: inline-block; margin-top: 12px; width: 100vw; max-width: 800px; aspect-ratio: 4 / 3;}
     #output { width: 100%; border: 4px solid #333; border-radius: 16px; background: #000; box-shadow: 0 4px 24px 0 #0001;}
-    #feedback { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,0.92); padding: 10px 16px; border-radius: 12px; font-size: 16px; color: #222; text-align: left; max-width: 220px; min-height: 32px; z-index: 10; box-shadow: 0 2px 8px 0 #0002;}
-    #rep-count { position: absolute; top: 12px; right: 12px; font-size: 18px; background: rgba(0,0,0,0.65); color: #fff; padding: 8px 18px; border-radius: 12px; z-index: 10; letter-spacing: 1px; font-weight: bold;}
-    #controls { position: absolute; bottom: 12px; right: 12px; z-index: 10; }
-    select { font-size: 15px; padding: 7px 16px; border-radius: 8px; border: 1px solid #aaa; background-color: #fff; color: #333; font-weight: bold;}
-    @media (max-width: 700px) {
-      #video-container { max-width: 98vw; }
-      #output { border-width: 2.5px; }
-      #feedback { font-size: 13px; max-width: 150px; padding: 7px 10px;}
-      #rep-count { font-size: 15px; padding: 6px 12px;}
-      select { font-size: 13px; padding: 6px 8px;}
+    #feedback { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.92); padding: 15px 20px; border-radius: 12px; font-size: 18px; color: #222; text-align: left; max-width: 300px; min-height: 40px; z-index: 10; box-shadow: 0 2px 8px 0 #0002;}
+    #rep-count { position: absolute; top: 20px; right: 20px; font-size: 24px; background: rgba(0,0,0,0.65); color: #fff; padding: 12px 24px; border-radius: 12px; z-index: 10; letter-spacing: 1px; font-weight: bold;}
+    #set-count { position: absolute; top: 80px; right: 20px; font-size: 24px; background: rgba(0,0,0,0.65); color: #fff; padding: 12px 24px; border-radius: 12px; z-index: 10; letter-spacing: 1px; font-weight: bold;}
+    #workout-config { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); padding: 30px; border-radius: 16px; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; min-width: 300px;}
+    #workout-config.active { display: block; }
+    .config-input { margin: 15px 0; }
+    .config-input label { display: block; margin-bottom: 8px; font-size: 16px;}
+    .config-input input { width: 120px; padding: 8px; font-size: 16px;}
+    .config-buttons { margin-top: 20px; }
+    .config-buttons button { margin: 0 8px; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;}
+    .start-btn { background: #4CAF50; color: white; }
+    .cancel-btn { background: #f44336; color: white; }
+    #controls { position: absolute; bottom: 20px; right: 20px; z-index: 10; }
+    select { font-size: 18px; padding: 10px 20px; border-radius: 8px; border: 1px solid #aaa; background-color: #fff; color: #333; font-weight: bold;}
+    #stage-indicator {
+      position: absolute;
+      top: 140px;
+      right: 20px;
+      font-size: 24px;
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      z-index: 10;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+    #rest-timer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 20px 40px;
+      border-radius: 16px;
+      z-index: 10;
+      letter-spacing: 2px;
+      font-weight: bold;
+      display: none;
+    }
+    #rest-timer.active {
+      display: block;
+    }
+    @media (max-width: 900px) {
+      #video-container { max-width: 95vw; }
+      #output { border-width: 3px; }
+      #feedback { font-size: 16px; max-width: 250px; padding: 12px 16px;}
+      #rep-count, #set-count { font-size: 20px; padding: 10px 20px;}
+      select { font-size: 16px; padding: 8px 16px;}
+      #stage-indicator {
+        font-size: 20px;
+        padding: 10px 20px;
+      }
+      #rest-timer {
+        font-size: 36px;
+        padding: 15px 30px;
+      }
     }
   </style>
 </head>
 <body>
   <h1>Pose Tracker</h1>
   <div id="video-container">
-    <canvas id="output" width="400" height="300"></canvas>
+    <canvas id="output" width="800" height="600"></canvas>
     <div id="feedback"></div>
     <div id="rep-count">Reps: 0</div>
+    <div id="set-count">Set: 0</div>
+    <div id="stage-indicator">Stage: Ready</div>
+    <div id="rest-timer">Rest: 60s</div>
+    <div id="workout-config">
+      <h3>Configure Workout</h3>
+      <div class="config-input">
+        <label for="sets">Number of Sets:</label>
+        <input type="number" id="sets" min="1" max="10" value="3">
+      </div>
+      <div class="config-input">
+        <label for="reps">Reps per Set:</label>
+        <input type="number" id="reps" min="1" max="100" value="10">
+      </div>
+      <div class="config-buttons">
+        <button class="start-btn" onclick="startWorkout()">Start Workout</button>
+        <button class="cancel-btn" onclick="cancelConfig()">Cancel</button>
+      </div>
+    </div>
     <div id="controls">
       <select id="exercise-select">
         <option value="pushup">Push-Up</option>
@@ -60,7 +127,94 @@
     let currentExercise = "pushup";
     let lastMsg = null;
     let lastMsgTime = 0;
+    let lastRepTime = 0;
     const FEEDBACK_DELAY = 5000; // ms
+    const REP_CYCLE_DELAY = 2000; // ms - minimum time between rep cycles
+
+    // Workout configuration
+    let currentSet = 0;
+    let totalSets = 3;
+    let repsPerSet = 10;
+    let workoutStarted = false;
+    let isResting = false;
+    let restStartTime = 0;
+    const REST_DURATION = 60000; // 1 minute rest between sets
+
+    // Message tracking
+    let lastSpokenMessage = null; // Track the last spoken message
+
+    function showWorkoutConfig() {
+      document.getElementById('workout-config').classList.add('active');
+    }
+
+    function startWorkout() {
+      totalSets = parseInt(document.getElementById('sets').value);
+      repsPerSet = parseInt(document.getElementById('reps').value);
+      currentSet = 1;
+      workoutStarted = true;
+      document.getElementById('workout-config').classList.remove('active');
+      speak(`Starting workout with ${totalSets} sets of ${repsPerSet} reps`);
+      updateSetCounter();
+    }
+
+    function cancelConfig() {
+      document.getElementById('workout-config').classList.remove('active');
+    }
+
+    function updateSetCounter() {
+      document.getElementById('set-count').innerText = `Set: ${currentSet}/${totalSets}`;
+    }
+
+    function checkSetCompletion() {
+      const currentReps = currentExercise === "pushup" ? pushupCounter : squatCounter;
+      if (currentReps >= repsPerSet) {
+        if (currentSet < totalSets) {
+          currentSet++;
+          isResting = true;
+          restStartTime = Date.now();
+          speak(`Set complete! Take a ${REST_DURATION/1000} second rest before starting set ${currentSet}`);
+          updateSetCounter();
+          // Reset rep counter for new set
+          if (currentExercise === "pushup") {
+            pushupCounter = 0;
+            pushupStage = null;
+          } else {
+            squatCounter = 0;
+            squatStage = "up";
+          }
+        } else {
+          speak("Workout complete! Great job!");
+          workoutStarted = false;
+        }
+      }
+    }
+
+    function checkRestPeriod() {
+      if (isResting) {
+        const restTimeElapsed = Date.now() - restStartTime;
+        if (restTimeElapsed >= REST_DURATION) {
+          isResting = false;
+          const endMessage = `Rest period over. Get into ${currentExercise === 'pushup' ? 'pushup' : 'squat'} position to start set ${currentSet}`;
+          speak(endMessage);
+          document.getElementById("feedback").innerText = endMessage;
+          document.getElementById('rest-timer').classList.remove('active');
+        } else {
+          const remainingSeconds = Math.ceil((REST_DURATION - restTimeElapsed) / 1000);
+          
+          // Only speak at specific intervals
+          if (remainingSeconds === REST_DURATION/1000) {
+            // Initial message
+            speak(`Rest for ${remainingSeconds} seconds`);
+          } else if (remainingSeconds === 30) {
+            // 30 seconds remaining
+            speak('30 seconds left');
+          } else if (remainingSeconds === 15) {
+            // 15 seconds remaining with preparation message
+            speak('15 seconds left, start getting into position');
+          }
+        }
+      }
+    }
 
     function angle(a, b, c) {
       const ab = [a[0]-b[0], a[1]-b[1]];
@@ -82,18 +236,101 @@
       return [landmarks[idxs[side+"_"+joint]].x, landmarks[idxs[side+"_"+joint]].y];
     }
 
+    function areRequiredPointsVisible(landmarks) {
+      // Check if shoulders and arms are visible
+      const requiredUpperBody = [
+        landmarks[11], // left shoulder
+        landmarks[12], // right shoulder
+        landmarks[13], // left elbow
+        landmarks[14], // right elbow
+        landmarks[15], // left wrist
+        landmarks[16]  // right wrist
+      ];
+
+      // Check if at least one side of the lower body is visible
+      const leftSide = [
+        landmarks[23], // left hip
+        landmarks[25], // left knee
+        landmarks[27]  // left ankle
+      ];
+
+      const rightSide = [
+        landmarks[24], // right hip
+        landmarks[26], // right knee
+        landmarks[28]  // right ankle
+      ];
+
+      // Check if all upper body points are visible
+      const upperBodyVisible = requiredUpperBody.every(point => 
+        point && point.visibility > 0.5
+      );
+
+      // Check if at least one side of lower body is visible
+      const leftSideVisible = leftSide.every(point => 
+        point && point.visibility > 0.5
+      );
+      const rightSideVisible = rightSide.every(point => 
+        point && point.visibility > 0.5
+      );
+
+      return upperBodyVisible && (leftSideVisible || rightSideVisible);
+    }
+
     function isStanding(landmarks) {
       const ls_y = landmarks[11].y, rs_y = landmarks[12].y;
       const lh_y = landmarks[23].y, rh_y = landmarks[24].y;
       const la_y = landmarks[27].y, ra_y = landmarks[28].y;
+      const lk_y = landmarks[25].y, rk_y = landmarks[26].y;
+      const lw_y = landmarks[15].y, rw_y = landmarks[16].y;
+      
       const shoulder_y = (ls_y + rs_y)/2;
       const hip_y = (lh_y + rh_y)/2;
       const ankle_y = (la_y + ra_y)/2;
-      return (hip_y - shoulder_y) > 0.15 && (ankle_y - hip_y) > 0.15;
+      const knee_y = (lk_y + rk_y)/2;
+      const wrist_y = (lw_y + rw_y)/2;
+
+      // Calculate vertical distances between key points
+      const shoulderToHip = Math.abs(hip_y - shoulder_y);
+      const hipToKnee = Math.abs(knee_y - hip_y);
+      const kneeToAnkle = Math.abs(ankle_y - knee_y);
+
+      // Check if body is in a vertical alignment (standing)
+      const isVertical = shoulderToHip > 0.15 && hipToKnee > 0.15 && kneeToAnkle > 0.15;
+
+      // Check if knees are significantly bent (indicating crouching)
+      const kneeAngle = angle(
+        [landmarks[23].x, landmarks[23].y], // hip
+        [landmarks[25].x, landmarks[25].y], // knee
+        [landmarks[27].x, landmarks[27].y]  // ankle
+      );
+      const isKneesBent = kneeAngle < 150; // If knees are bent more than 30 degrees
+
+      // Check if hips are significantly lower than normal standing position
+      const isHipsLowered = hipToKnee < 0.1; // Hips are closer to knees than normal
+
+      // Person is standing if:
+      // 1. Body is in vertical alignment AND
+      // 2. Wrists are above shoulders AND
+      // 3. Knees are not significantly bent AND
+      // 4. Hips are not significantly lowered
+      return isVertical && isKneesBent && !isHipsLowered;
     }
 
     function countPushup(landmarks) {
       let errorMessage = null;
+
+      // // First check if all required points are visible
+      // if (!areRequiredPointsVisible(landmarks) && pushupStage === null) {
+      //   return [pushupCounter, "Please make sure your upper body and at least one side of your lower body are fully visible in the frame"];
+      // }
+
+      // If we're not in resting state and user is standing, prompt to get into position
+      if (!isResting && pushupStage === null) {
+        pushupStage = null;
+        pushupCounter = 0;
+        return [pushupCounter, "Get into pushup position to start"];
+      }
+
       const ls = getCoord(landmarks, "left", "shoulder");
       const lh = getCoord(landmarks, "left", "hip");
       const lk = getCoord(landmarks, "left", "knee");
@@ -107,65 +344,73 @@
       const rw = getCoord(landmarks, "right", "wrist");
       const re = getCoord(landmarks, "right", "elbow");
 
-      const wd = Math.abs(Math.hypot(lw[0]-rw[0], lw[1]-rw[1]));
-      const sd = Math.abs(Math.hypot(ls[0]-rs[0], ls[1]-rs[1]));
+      const wd = Math.abs(Math.hypot(lw[0]-rw[0], lw[1]-rw[1])); // Distance between wrists
+      const sd = Math.abs(Math.hypot(ls[0]-rs[0], ls[1]-rs[1])); // Distance between shoulders
       const lea = angle(ls, le, lw);
       const rea = angle(rs, re, rw);
       const lha = angle(ls, lh, lk);
       const rha = angle(rs, rh, rk);
       const lka = angle(lh, lk, la);
       const rka = angle(rh, rk, ra);
-      const lsa = angle(le, ls, lh);
-      const rsa = angle(re, rs, rh);
 
-      const lb = 0.5 * wd, ub = 1.5 * wd;
       const th_up = 150, th_down = 120;
 
-      if (isStanding(landmarks)) {
-        pushupStage = null;
-        pushupCounter = 0;
-        return [pushupCounter, "Please get into pushup position to start"];
-      }
-
+      // Calculate proper hand width based on shoulder width
+      const minHandWidth = sd * 0.8;  // Hands should be at least 80% of shoulder width apart
+      const maxHandWidth = sd * 1.5;  // Hands should not be more than 150% of shoulder width apart
       if (pushupStage === null) {
+        // chekc y axis difference between shoulders and hip
+        const shoulderToHip = Math.abs(rh[1] - lh[1]);
+        if (shoulderToHip > 0.1) {
+          return [pushupCounter, "Align your hips!"];
+        }
         if ((lha >= th_up && lka >= th_up) || (rha >= th_up && rka >= th_up)) {
-          if (lb <= sd && sd <= ub) {
-            pushupStage = 'up';
-            return [pushupCounter, "You can start pushing up"];
+          if (wd >= minHandWidth && wd <= maxHandWidth) {
+            if (lea >= th_up || rea >= th_up) {
+              pushupStage = 'up';
+              return [pushupCounter, "You can start"];
+            } else {
+              return [pushupCounter, "Straighten your arms"];
+            }
           } else {
-            if (sd < lb) errorMessage = "Shoulders too close to wrists - widen your hand position";
-            else if (sd > ub) errorMessage = "Shoulders too far from wrists - bring your hands closer";
+            if (wd < minHandWidth) errorMessage = "Widen your hands";
+            else if (wd > maxHandWidth) errorMessage = "Bring your hands closer";
             return [pushupCounter, errorMessage];
           }
         } else {
-          errorMessage = "Keep your body straight - align your hips!";
+          errorMessage = "Align your hips!";
           return [pushupCounter, errorMessage];
         }
       }
 
-      if (pushupStage === 'down' && lb <= sd && sd <= ub && (lea >= th_up || rea >= th_up)) {
+      if (pushupStage === 'down' && (lea >= th_up || rea >= th_up)) {
         pushupStage = "up";
         pushupCounter += 1;
+        lastRepTime = Date.now();
       }
 
       if (pushupStage === 'up' && (lea <= th_down || rea <= th_down)) {
         pushupStage = "down";
       }
 
-      if (!isStanding(landmarks) && (pushupStage === 'up' || pushupStage === 'down')) {
-        if (lha < 160 || rha < 160) errorMessage = "Hips too low - raise your hips!";
-        else if (lha > 200 || rha > 200) errorMessage = "Hips too high - lower your hips!";
-        else if (lsa > 100 || rsa > 100) errorMessage = "Arms too wide - keep elbows closer to body";
-        else if (lsa < 60 || rsa < 60) errorMessage = "Arms too close - widen elbow position slightly";
-        else if (wd > sd * 1.5) errorMessage = "Hands too wide - bring them closer";
-        else if (wd < sd * 0.5) errorMessage = "Hands too close - widen your grip";
-        if (errorMessage) return [pushupCounter, errorMessage];
-      }
+      // if (!isStanding(landmarks) && (pushupStage === 'up' || pushupStage === 'down')) {
+      //   if (lha < 160 || rha < 160) errorMessage = "Hips too low - raise your hips!";
+      //   else if (lha > 200 || rha > 200) errorMessage = "Hips too high - lower your hips!";
+      //   else if (lsa > 100 || rsa > 100) errorMessage = "Arms too wide - keep elbows closer to body";
+      //   else if (lsa < 60 || rsa < 60) errorMessage = "Arms too close - widen elbow position slightly";
+      //   if (errorMessage) return [pushupCounter, errorMessage];
+      // }
 
       return [pushupCounter, null];
     }
 
     function countSquat(landmarks) {
+
+      // If we're not in resting state and user is not in squat position, prompt to get into position
+      if (!isResting && isStanding(landmarks) && squatStage === "up") {
+        return [squatCounter, "Get into squat position to start the set"];
+      }
+
       // Simple squat logic
       const hip = [landmarks[23].x, landmarks[23].y];
       const knee = [landmarks[25].x, landmarks[25].y];
@@ -185,14 +430,49 @@
     }
 
     function speak(msg) {
-      const now = Date.now();
       if (!msg) return;
-      if (msg !== lastMsg || (now - lastMsgTime > FEEDBACK_DELAY)) {
-        lastMsg = msg;
-        lastMsgTime = now;
-        const utterance = new SpeechSynthesisUtterance(msg);
-        utterance.lang = "en-US";
-        speechSynthesis.speak(utterance);
+      
+      // Never speak the same message twice in a row
+      if (msg === lastSpokenMessage) {
+        return;
+      }
+
+      // Update the last spoken message
+      lastSpokenMessage = msg;
+      
+      const utterance = new SpeechSynthesisUtterance(msg);
+      utterance.lang = "en-US";
+      speechSynthesis.speak(utterance);
+    }
+
+    function updateStageIndicator() {
+      const stageElement = document.getElementById('stage-indicator');
+      if (currentExercise === 'pushup') {
+        if (pushupStage === null) {
+          stageElement.innerText = 'Stage: Ready';
+        } else if (pushupStage === 'up') {
+          stageElement.innerText = 'Stage: Up';
+        } else if (pushupStage === 'down') {
+          stageElement.innerText = 'Stage: Down';
+        }
+      } else {
+        if (squatStage === 'up') {
+          stageElement.innerText = 'Stage: Up';
+        } else if (squatStage === 'down') {
+          stageElement.innerText = 'Stage: Down';
+        }
+      }
+    }
+
+    function updateRestTimer() {
+      const timerElement = document.getElementById('rest-timer');
+      if (isResting) {
+        const restTimeElapsed = Date.now() - restStartTime;
+        const remainingSeconds = Math.ceil((REST_DURATION - restTimeElapsed) / 1000);
+        timerElement.innerText = `Rest: ${remainingSeconds}s`;
+        timerElement.classList.add('active');
+      } else {
+        timerElement.classList.remove('active');
       }
     }
 
@@ -207,16 +487,31 @@
       if (results.poseLandmarks) {
         drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
         drawLandmarks(ctx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2});
-        if (currentExercise === "pushup") {
-          [reps, feedback] = countPushup(results.poseLandmarks);
-        } else {
-          [reps, feedback] = countSquat(results.poseLandmarks);
+        
+        if (!workoutStarted) {
+          showWorkoutConfig();
+        } else if (!isResting) {
+          if (currentExercise === "pushup") {
+            [reps, feedback] = countPushup(results.poseLandmarks);
+          } else {
+            [reps, feedback] = countSquat(results.poseLandmarks);
+          }
+          document.getElementById("rep-count").innerText = `Reps: ${reps}/${repsPerSet}`;
+          if (feedback) {
+            document.getElementById("feedback").innerText = feedback;
+            speak(feedback);
+          }
+          checkSetCompletion();
         }
-        document.getElementById("rep-count").innerText = `Reps: ${reps}`;
-        document.getElementById("feedback").innerText = feedback ? feedback : "";
-        if (feedback) speak(feedback);
+        checkRestPeriod();
+        updateStageIndicator();
+        updateRestTimer();
       } else {
-        document.getElementById("feedback").innerText = "Move into frame";
+        const noPoseMessage = "Move into frame";
+        if (document.getElementById("feedback").innerText !== noPoseMessage) {
+          document.getElementById("feedback").innerText = noPoseMessage;
+          speak(noPoseMessage);
+        }
       }
       ctx.restore();
     }
@@ -226,9 +521,19 @@
       // Reset state
       pushupStage = null; pushupCounter = 0;
       squatStage = "up"; squatCounter = 0;
+      currentSet = 0;
+      workoutStarted = false;
+      isResting = false;
       document.getElementById("rep-count").innerText = "Reps: 0";
+      document.getElementById("set-count").innerText = "Set: 0";
+      document.getElementById("stage-indicator").innerText = "Stage: Ready";
       document.getElementById("feedback").innerText = "";
+      document.getElementById('rest-timer').classList.remove('active');
+      showWorkoutConfig();
     });
+
+    // Show workout config when page loads
+    window.addEventListener('load', showWorkoutConfig);
 
     // --- Camera/pose setup ---
     const videoElement = document.getElementById('video');
