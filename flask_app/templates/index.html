@@ -2,55 +2,172 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Pose Tracker</title>
+  <title>Workout Session</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Mediapipe JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; text-align: center;}
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f4f4f4; 
+      margin: 0; 
+      padding: 0; 
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
     h1 { color: #333; margin-top: 16px; }
-    #video-container { position: relative; display: inline-block; margin-top: 12px; width: 100vw; max-width: 800px; aspect-ratio: 4 / 3;}
-    #output { width: 100%; border: 4px solid #333; border-radius: 16px; background: #000; box-shadow: 0 4px 24px 0 #0001;}
-    #feedback { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.92); padding: 15px 20px; border-radius: 12px; font-size: 18px; color: #222; text-align: left; max-width: 300px; min-height: 40px; z-index: 10; box-shadow: 0 2px 8px 0 #0002;}
-    #rep-count { position: absolute; top: 20px; right: 20px; font-size: 24px; background: rgba(0,0,0,0.65); color: #fff; padding: 12px 24px; border-radius: 12px; z-index: 10; letter-spacing: 1px; font-weight: bold;}
-    #set-count { position: absolute; top: 80px; right: 20px; font-size: 24px; background: rgba(0,0,0,0.65); color: #fff; padding: 12px 24px; border-radius: 12px; z-index: 10; letter-spacing: 1px; font-weight: bold;}
-    #workout-config { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.95); padding: 30px; border-radius: 16px; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: none; min-width: 300px;}
-    #workout-config.active { display: block; }
-    .config-input { margin: 15px 0; }
-    .config-input label { display: block; margin-bottom: 8px; font-size: 16px;}
-    .config-input input { width: 120px; padding: 8px; font-size: 16px;}
-    .config-buttons { margin-top: 20px; }
-    .config-buttons button { margin: 0 8px; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;}
-    .start-btn { background: #4CAF50; color: white; }
-    .cancel-btn { background: #f44336; color: white; }
-    #controls { position: absolute; bottom: 20px; right: 20px; z-index: 10; }
-    select { font-size: 18px; padding: 10px 20px; border-radius: 8px; border: 1px solid #aaa; background-color: #fff; color: #333; font-weight: bold;}
+    
+    .main-container {
+      display: flex;
+      flex: 1;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .feedback-panel {
+      flex: 1;
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px 0 #0001;
+      display: flex;
+      flex-direction: column;
+      max-width: 300px;
+    }
+
+    .video-panel {
+      flex: 2;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .recap-panel {
+      flex: 1;
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px 0 #0001;
+      display: flex;
+      flex-direction: column;
+      max-width: 300px;
+    }
+
+    #video-container { 
+      position: relative; 
+      width: 100%; 
+      max-width: 800px; 
+      aspect-ratio: 4 / 3;
+    }
+    #output { 
+      width: 100%; 
+      border: 4px solid #333; 
+      border-radius: 16px; 
+      background: #000; 
+      box-shadow: 0 4px 24px 0 #0001;
+    }
+    #workout-config { 
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%); 
+      background: rgba(255,255,255,0.95); 
+      padding: 30px; 
+      border-radius: 16px; 
+      z-index: 20; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+      display: none; 
+      min-width: 300px;
+    }
+    #workout-config.active { 
+      display: block; 
+    }
+    .config-input { 
+      margin: 15px 0; 
+    }
+    .config-input label { 
+      display: block; 
+      margin-bottom: 8px; 
+      font-size: 16px;
+    }
+    .config-input input { 
+      width: 120px; 
+      padding: 8px; 
+      font-size: 16px;
+    }
+    .config-buttons { 
+      margin-top: 20px; 
+    }
+    .config-buttons button, .config-buttons a { 
+      margin: 0 8px; 
+      padding: 12px 24px; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 16px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .start-btn { 
+      background: #4CAF50; 
+      color: white; 
+    }
+    .cancel-btn { 
+      background: #f44336; 
+      color: white; 
+    }
+    #feedback { 
+      background: rgba(255,255,255,0.92); 
+      padding: 15px 20px; 
+      border-radius: 12px; 
+      font-size: 18px; 
+      color: #222; 
+      text-align: left; 
+      margin-bottom: 20px;
+      min-height: 40px; 
+      box-shadow: 0 2px 8px 0 #0002;
+    }
+    #rep-count { 
+      font-size: 24px; 
+      background: rgba(0,0,0,0.65); 
+      color: #fff; 
+      padding: 12px 24px; 
+      border-radius: 12px; 
+      margin-bottom: 10px;
+      letter-spacing: 1px; 
+      font-weight: bold;
+    }
+    #set-count { 
+      font-size: 24px; 
+      background: rgba(0,0,0,0.65); 
+      color: #fff; 
+      padding: 12px 24px; 
+      border-radius: 12px; 
+      margin-bottom: 10px;
+      letter-spacing: 1px; 
+      font-weight: bold;
+    }
     #stage-indicator {
-      position: absolute;
-      top: 140px;
-      right: 20px;
       font-size: 24px;
       background: rgba(0,0,0,0.65);
       color: #fff;
       padding: 12px 24px;
       border-radius: 12px;
-      z-index: 10;
+      margin-bottom: 10px;
       letter-spacing: 1px;
       font-weight: bold;
     }
     #rest-timer {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       font-size: 48px;
       background: rgba(0,0,0,0.8);
       color: #fff;
       padding: 20px 40px;
       border-radius: 16px;
-      z-index: 10;
       letter-spacing: 2px;
       font-weight: bold;
       display: none;
@@ -58,52 +175,119 @@
     #rest-timer.active {
       display: block;
     }
-    @media (max-width: 900px) {
-      #video-container { max-width: 95vw; }
-      #output { border-width: 3px; }
-      #feedback { font-size: 16px; max-width: 250px; padding: 12px 16px;}
-      #rep-count, #set-count { font-size: 20px; padding: 10px 20px;}
-      select { font-size: 16px; padding: 8px 16px;}
-      #stage-indicator {
-        font-size: 20px;
-        padding: 10px 20px;
+
+    .recap-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .recap-content {
+      text-align: left;
+      font-size: 16px;
+      color: #666;
+    }
+
+    .recap-item {
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #4CAF50;
+    }
+
+    .recap-item.completed {
+      border-left-color: #4CAF50;
+    }
+
+    .recap-item.current {
+      border-left-color: #2196F3;
+    }
+
+    .recap-item.pending {
+      border-left-color: #9E9E9E;
+    }
+
+    @media (max-width: 1200px) {
+      .main-container {
+        flex-direction: column;
       }
-      #rest-timer {
-        font-size: 36px;
-        padding: 15px 30px;
+      .feedback-panel, .recap-panel {
+        max-width: none;
       }
     }
+
+    .start-training {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 2rem auto;
+            padding: 1.2rem;
+            background: #4CAF50;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .start-training:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
   </style>
 </head>
 <body>
-  <h1>Pose Tracker</h1>
-  <div id="video-container">
-    <canvas id="output" width="800" height="600"></canvas>
-    <div id="feedback"></div>
-    <div id="rep-count">Reps: 0</div>
-    <div id="set-count">Set: 0</div>
-    <div id="stage-indicator">Stage: Ready</div>
-    <div id="rest-timer">Rest: 60s</div>
-    <div id="workout-config">
-      <h3>Configure Workout</h3>
-      <div class="config-input">
-        <label for="sets">Number of Sets:</label>
-        <input type="number" id="sets" min="1" max="10" value="3">
-      </div>
-      <div class="config-input">
-        <label for="reps">Reps per Set:</label>
-        <input type="number" id="reps" min="1" max="100" value="10">
-      </div>
-      <div class="config-buttons">
-        <button class="start-btn" onclick="startWorkout()">Start Workout</button>
-        <button class="cancel-btn" onclick="cancelConfig()">Cancel</button>
+  <h1>Workout Session</h1>
+  <div class="main-container">
+    <div class="feedback-panel">
+      <div id="feedback"></div>
+      <div id="rep-count">Reps: 0</div>
+      <div id="set-count">Set: 0</div>
+      <div id="stage-indicator">Stage: Ready</div>
+    </div>
+    
+    <div class="video-panel">
+      <div id="video-container">
+        <canvas id="output" width="800" height="600"></canvas>
+        <div id="rest-timer">Rest: 60s</div>
+        <div id="workout-config">
+          <h3>Configure Workout</h3>
+          <div class="config-input">
+            <label for="sets">Number of Sets:</label>
+            <input type="number" id="sets" min="1" max="10" value="3">
+          </div>
+          <div class="config-input">
+            <label for="reps">Number of Repetitions:</label>
+            <input type="number" id="reps" min="1" max="100" value="10">
+          </div>
+          <div class="config-input">
+            <label for="rest-time">Rest Time (seconds):</label>
+            <input type="number" id="rest-time" min="10" max="300" value="60">
+          </div>
+          <div class="config-buttons">
+            <button class="start-btn" onclick="startWorkout()">Start Workout</button>
+            <a class="cancel-btn" href="{{ url_for('profile') }}" class="start-training">Cancel</a>
+          </div>
+        </div>
+        <div id="controls">
+          <select id="exercise-select">
+            <option value="pushup">Push-Up</option>
+            <option value="squat">Squat</option>
+          </select>
+        </div>
       </div>
     </div>
-    <div id="controls">
-      <select id="exercise-select">
-        <option value="pushup">Push-Up</option>
-        <option value="squat">Squat</option>
-      </select>
+
+    <div class="recap-panel">
+      <div class="recap-title">Training Recap</div>
+      <div id="recap-content" class="recap-content">
+        <!-- Recap items will be added here dynamically -->
+      </div>
     </div>
   </div>
   <video id="video" autoplay playsinline muted style="display:none"></video>
@@ -119,6 +303,9 @@
     window.addEventListener("click", unlockSpeech, {once: true});
     window.addEventListener("touchstart", unlockSpeech, {once: true});
 
+    // Get the profile URL from Flask
+    const profileUrl = "{{ url_for('profile') }}";
+
     // --- UI State ---
     let pushupCounter = 0;
     let pushupStage = null;
@@ -131,6 +318,191 @@
     const FEEDBACK_DELAY = 5000; // ms
     const REP_CYCLE_DELAY = 2000; // ms - minimum time between rep cycles
 
+    // Speech recognition setup
+    let recognition;
+    let isListening = false;
+    let transcriptTimer = null;
+
+    function setupSpeechRecognition() {
+      if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = function(event) {
+          const transcript = Array.from(event.results)
+            .map(result => result[0].transcript)
+            .join('')
+            .toLowerCase();
+
+          // Clear any existing timer
+          if (transcriptTimer) {
+            clearTimeout(transcriptTimer);
+          }
+
+          // Display the transcript for debugging
+          document.getElementById("feedback").innerText = "Heard: " + transcript;
+
+          // Set a timer to clear the transcript after 0.5 seconds
+          transcriptTimer = setTimeout(() => {
+            document.getElementById("feedback").innerText = "";
+          }, 500);
+
+          // Handle voice commands
+          if (transcript.includes('number of repetitions')) {
+            // Try to find numbers in the transcript
+            const numberMatch = transcript.match(/\d+/);
+            if (numberMatch) {
+              const reps = parseInt(numberMatch[0]);
+              document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted number: " + reps + ")";
+              if (reps > 0 && reps <= 100) {
+                document.getElementById('reps').value = reps;
+                speak(`Reps set to ${reps}`);
+                recognition.stop();
+                setTimeout(() => recognition.start(), 100);
+              }
+            } else {
+              // Try to convert written numbers
+              const writtenNumbers = {
+                'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+                'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 
+                'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+                'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+                'twenty one': 21, 'twenty two': 22, 'twenty three': 23, 'twenty four': 24, 'twenty five': 25,
+                'twenty six': 26, 'twenty seven': 27, 'twenty eight': 28, 'twenty nine': 29, 'thirty': 30,
+                'thirty one': 31, 'thirty two': 32, 'thirty three': 33, 'thirty four': 34, 'thirty five': 35,
+                'thirty six': 36, 'thirty seven': 37, 'thirty eight': 38, 'thirty nine': 39, 'forty': 40,
+              };
+              
+              for (const [word, num] of Object.entries(writtenNumbers)) {
+                if (transcript.includes(word)) {
+                  document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted word: " + word + " = " + num + ")";
+                  if (num > 0 && num <= 100) {
+                    document.getElementById('reps').value = num;
+                    speak(`Reps set to ${num}`);
+                    recognition.stop();
+                    setTimeout(() => recognition.start(), 100);
+                  }
+                  break;
+                }
+              }
+            }
+          } else if (transcript.includes('number of sets')) {
+            // Try to find numbers in the transcript
+            const numberMatch = transcript.match(/\d+/);
+            if (numberMatch) {
+              const sets = parseInt(numberMatch[0]);
+              document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted number: " + sets + ")";
+              if (sets > 0 && sets <= 10) {
+                document.getElementById('sets').value = sets;
+                speak(`Sets set to ${sets}`);
+                recognition.stop();
+                setTimeout(() => recognition.start(), 100);
+              }
+            } else {
+              // Try to convert written numbers
+              const writtenNumbers = {
+                'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+                'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 
+                'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+                'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+                'twenty one': 21, 'twenty two': 22, 'twenty three': 23, 'twenty four': 24, 'twenty five': 25,
+                'twenty six': 26, 'twenty seven': 27, 'twenty eight': 28, 'twenty nine': 29, 'thirty': 30,
+                'thirty one': 31, 'thirty two': 32, 'thirty three': 33, 'thirty four': 34, 'thirty five': 35,
+                'thirty six': 36, 'thirty seven': 37, 'thirty eight': 38, 'thirty nine': 39, 'forty': 40,
+              };
+              
+              for (const [word, num] of Object.entries(writtenNumbers)) {
+                if (transcript.includes(word)) {
+                  document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted word: " + word + " = " + num + ")";
+                  if (num > 0 && num <= 10) {
+                    document.getElementById('sets').value = num;
+                    speak(`Sets set to ${num}`);
+                    recognition.stop();
+                    setTimeout(() => recognition.start(), 100);
+                  }
+                  break;
+                }
+              }
+            }
+          } else if (transcript.includes('rest time') || transcript.includes('set rest time')) {
+            // Try to find numbers in the transcript
+            const numberMatch = transcript.match(/\d+/);
+            if (numberMatch) {
+              const restTime = parseInt(numberMatch[0]);
+              document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted number: " + restTime + ")";
+              if (restTime >= 10 && restTime <= 300) {
+                document.getElementById('rest-time').value = restTime;
+                speak(`Rest time set to ${restTime} seconds`);
+                recognition.stop();
+                setTimeout(() => recognition.start(), 100);
+              } else {
+                speak(`Please set rest time between 10 and 300 seconds`);
+              }
+            } else {
+              // Try to convert written numbers
+              const writtenNumbers = {
+                'ten': 10, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
+                'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90, 'hundred': 100,
+                'one hundred': 100, 'two hundred': 200, 'three hundred': 300
+              };
+              
+              for (const [word, num] of Object.entries(writtenNumbers)) {
+                if (transcript.includes(word)) {
+                  document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted word: " + word + " = " + num + ")";
+                  if (num >= 10 && num <= 300) {
+                    document.getElementById('rest-time').value = num;
+                    speak(`Rest time set to ${num} seconds`);
+                    recognition.stop();
+                    setTimeout(() => recognition.start(), 100);
+                  } else {
+                    speak(`Please set rest time between 10 and 300 seconds`);
+                  }
+                  break;
+                }
+              }
+            }
+          } else if (transcript.includes('start workout')) {
+            startWorkout();
+            recognition.stop();
+            setTimeout(() => recognition.start(), 100);
+          } else if (transcript.includes('cancel')) {
+            cancelConfig();
+            recognition.stop();
+            setTimeout(() => recognition.start(), 100);
+          }
+        };
+
+        recognition.onerror = function(event) {
+          console.error('Speech recognition error:', event.error);
+          document.getElementById("feedback").innerText = "Speech recognition error: " + event.error;
+        };
+
+        recognition.onend = function() {
+          if (isListening) {
+            recognition.start();
+          }
+        };
+      }
+    }
+
+    function toggleVoiceControl() {
+      if (!recognition) {
+        setupSpeechRecognition();
+      }
+      
+      if (isListening) {
+        recognition.stop();
+        isListening = false;
+        speak('Voice control disabled');
+      } else {
+        recognition.start();
+        isListening = true;
+        speak('Voice control enabled. You can say "number of sets" or "number of repetitions"');
+      }
+    }
+
     // Workout configuration
     let currentSet = 0;
     let totalSets = 3;
@@ -138,31 +510,88 @@
     let workoutStarted = false;
     let isResting = false;
     let restStartTime = 0;
-    const REST_DURATION = 60000; // 1 minute rest between sets
+    let REST_DURATION = 60000; // Default 1 minute rest between sets
 
     // Message tracking
     let lastSpokenMessage = null; // Track the last spoken message
 
     function showWorkoutConfig() {
       document.getElementById('workout-config').classList.add('active');
+      // Start voice control when config is shown
+      if (!isListening) {
+        toggleVoiceControl();
+      }
     }
 
     function startWorkout() {
       totalSets = parseInt(document.getElementById('sets').value);
       repsPerSet = parseInt(document.getElementById('reps').value);
+      REST_DURATION = parseInt(document.getElementById('rest-time').value) * 1000;
       currentSet = 1;
       workoutStarted = true;
       document.getElementById('workout-config').classList.remove('active');
-      speak(`Starting workout with ${totalSets} sets of ${repsPerSet} reps`);
+      speak(`Starting workout with ${totalSets} sets of ${repsPerSet} reps and ${REST_DURATION/1000} seconds rest`);
       updateSetCounter();
+      updateRecap(); // Initialize recap when workout starts
+      if (isListening) {
+        toggleVoiceControl();
+      }
     }
 
     function cancelConfig() {
       document.getElementById('workout-config').classList.remove('active');
+      // Stop voice control when config is cancelled
+      if (isListening) {
+        toggleVoiceControl();
+      }
+      // Redirect to profile page
+      window.location.href = '/profile';
     }
 
     function updateSetCounter() {
       document.getElementById('set-count').innerText = `Set: ${currentSet}/${totalSets}`;
+    }
+
+    function updateRecap() {
+      const recapContent = document.getElementById('recap-content');
+      recapContent.innerHTML = ''; // Clear existing recap
+
+      // Add completed sets
+      for (let i = 1; i < currentSet; i++) {
+        const setItem = document.createElement('div');
+        setItem.className = 'recap-item completed';
+        setItem.innerHTML = `
+          <strong>Set ${i}</strong><br>
+          Completed ${repsPerSet} reps<br>
+          ${currentExercise === 'pushup' ? 'Push-ups' : 'Squats'}
+        `;
+        recapContent.appendChild(setItem);
+      }
+
+      // Add current set if workout is in progress
+      if (workoutStarted && currentSet <= totalSets) {
+        const currentSetItem = document.createElement('div');
+        currentSetItem.className = 'recap-item current';
+        const currentReps = currentExercise === "pushup" ? pushupCounter : squatCounter;
+        currentSetItem.innerHTML = `
+          <strong>Set ${currentSet} (Current)</strong><br>
+          ${currentReps}/${repsPerSet} reps completed<br>
+          ${currentExercise === 'pushup' ? 'Push-ups' : 'Squats'}
+        `;
+        recapContent.appendChild(currentSetItem);
+      }
+
+      // Add upcoming sets
+      for (let i = currentSet + 1; i <= totalSets; i++) {
+        const setItem = document.createElement('div');
+        setItem.className = 'recap-item pending';
+        setItem.innerHTML = `
+          <strong>Set ${i}</strong><br>
+          ${repsPerSet} reps planned<br>
+          ${currentExercise === 'pushup' ? 'Push-ups' : 'Squats'}
+        `;
+        recapContent.appendChild(setItem);
+      }
     }
 
     function checkSetCompletion() {
@@ -174,6 +603,7 @@
           restStartTime = Date.now();
           speak(`Set complete! Take a ${REST_DURATION/1000} second rest before starting set ${currentSet}`);
           updateSetCounter();
+          updateRecap(); // Update recap when set is completed
           // Reset rep counter for new set
           if (currentExercise === "pushup") {
             pushupCounter = 0;
@@ -185,6 +615,7 @@
         } else {
           speak("Workout complete! Great job!");
           workoutStarted = false;
+          updateRecap(); // Update recap when workout is complete
         }
       }
     }
@@ -324,12 +755,12 @@
       //   return [pushupCounter, "Please make sure your upper body and at least one side of your lower body are fully visible in the frame"];
       // }
 
-      // If we're not in resting state and user is standing, prompt to get into position
-      if (!isResting && pushupStage === null) {
-        pushupStage = null;
-        pushupCounter = 0;
-        return [pushupCounter, "Get into pushup position to start"];
-      }
+      // // If we're not in resting state and user is standing, prompt to get into position
+      // if (!isResting && pushupStage === null) {
+      //   pushupStage = null;
+      //   pushupCounter = 0;
+      //   return [pushupCounter, "Get into pushup position to start"];
+      // }
 
       const ls = getCoord(landmarks, "left", "shoulder");
       const lh = getCoord(landmarks, "left", "hip");
@@ -358,12 +789,18 @@
       // Calculate proper hand width based on shoulder width
       const minHandWidth = sd * 0.8;  // Hands should be at least 80% of shoulder width apart
       const maxHandWidth = sd * 1.5;  // Hands should not be more than 150% of shoulder width apart
-      if (pushupStage === null) {
-        // chekc y axis difference between shoulders and hip
-        const shoulderToHip = Math.abs(rh[1] - lh[1]);
-        if (shoulderToHip > 0.1) {
-          return [pushupCounter, "Align your hips!"];
-        }
+
+      // right shoulder to right   ankle
+      const rightShoulderToRightAnkle = Math.abs(rs[1] - ra[1]);
+      // left shoulder to left ankle
+      const leftShoulderToLeftAnkle = Math.abs(ls[1] - la[1]);
+      
+      if (pushupStage === null && !isResting) {
+
+        if (rightShoulderToRightAnkle > 0.35 || leftShoulderToLeftAnkle > 0.35) {
+          return [pushupCounter, "Get into pushup position!" ];
+        } 
+
         if ((lha >= th_up && lka >= th_up) || (rha >= th_up && rka >= th_up)) {
           if (wd >= minHandWidth && wd <= maxHandWidth) {
             if (lea >= th_up || rea >= th_up) {
@@ -392,14 +829,14 @@
       if (pushupStage === 'up' && (lea <= th_down || rea <= th_down)) {
         pushupStage = "down";
       }
-
-      // if (!isStanding(landmarks) && (pushupStage === 'up' || pushupStage === 'down')) {
-      //   if (lha < 160 || rha < 160) errorMessage = "Hips too low - raise your hips!";
-      //   else if (lha > 200 || rha > 200) errorMessage = "Hips too high - lower your hips!";
-      //   else if (lsa > 100 || rsa > 100) errorMessage = "Arms too wide - keep elbows closer to body";
-      //   else if (lsa < 60 || rsa < 60) errorMessage = "Arms too close - widen elbow position slightly";
-      //   if (errorMessage) return [pushupCounter, errorMessage];
-      // }
+      // to fix
+      if ((rightShoulderToRightAnkle > 0.35 || leftShoulderToLeftAnkle > 0.35) && (pushupStage === 'up' || pushupStage === 'down')) {
+        if (lha < 160 || rha < 160) errorMessage = "Raise your hips!";
+        else if (lha > 200 || rha > 200) errorMessage = "Lower your hips!";
+        // else if (lsa > 100 || rsa > 100) errorMessage = "Arms too wide";
+        // else if (lsa < 60 || rsa < 60) errorMessage = "Arms too close";
+        if (errorMessage) return [pushupCounter, errorMessage];
+      }
 
       return [pushupCounter, null];
     }
@@ -529,11 +966,15 @@
       document.getElementById("stage-indicator").innerText = "Stage: Ready";
       document.getElementById("feedback").innerText = "";
       document.getElementById('rest-timer').classList.remove('active');
+      updateRecap(); // Update recap when exercise changes
       showWorkoutConfig();
     });
 
     // Show workout config when page loads
-    window.addEventListener('load', showWorkoutConfig);
+    window.addEventListener('load', () => {
+      showWorkoutConfig();
+      setupSpeechRecognition();
+    });
 
     // --- Camera/pose setup ---
     const videoElement = document.getElementById('video');
