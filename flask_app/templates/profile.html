@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Trainer AI</title>
+    <title>Profile - Trainer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -48,6 +48,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1.5rem;
+            margin-bottom: 2rem;
         }
         .info-group {
             padding: 1rem;
@@ -83,11 +84,75 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
+        .workout-history {
+            margin-top: 3rem;
+        }
+        .workout-history h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        .workout-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #4CAF50;
+        }
+        .workout-card h3 {
+            margin: 0 0 1rem 0;
+            color: #333;
+            font-size: 1.2rem;
+        }
+        .workout-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 0.8rem;
+            border-radius: 4px;
+        }
+        .stat-item strong {
+            display: block;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+        .stat-item span {
+            color: #333;
+            font-size: 1.1rem;
+        }
+        .mistakes-list {
+            background: #fff3cd;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        .mistakes-list h4 {
+            margin: 0 0 0.5rem 0;
+            color: #856404;
+        }
+        .mistakes-list p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .no-workouts {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>Trainer AI</h2>
+        <h2>Pushup Trainer</h2>
         <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
     </div>
     <div class="profile-container">
@@ -107,6 +172,45 @@
             </div>
         </div>
         <a href="{{ url_for('index') }}" class="start-training">Start Workout</a>
+
+        <div class="workout-history">
+            <h2>Workout History</h2>
+            {% if workout_history %}
+                {% for workout in workout_history %}
+                <div class="workout-card">
+                    <h3>Workout Session #{{ loop.revindex }}</h3>
+                    <div class="workout-stats">
+                        <div class="stat-item">
+                            <strong>Sets Completed</strong>
+                            <span>{{ workout.sets_completed }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>Sets Missed</strong>
+                            <span>{{ workout.sets_missed }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>Total Reps</strong>
+                            <span>{{ workout.total_reps }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <strong>Duration</strong>
+                            <span>{{ workout.duration }}</span>
+                        </div>
+                    </div>
+                    {% if workout.mistakes %}
+                    <div class="mistakes-list">
+                        <h4>Form Corrections</h4>
+                        <p>{{ workout.mistakes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-workouts">
+                    <p>No workout history available yet. Start your first workout!</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html> 

@@ -125,7 +125,7 @@
       background: rgba(255,255,255,0.92); 
       padding: 15px 20px; 
       border-radius: 12px; 
-      font-size: 18px; 
+      font-size: 25px; 
       color: #222; 
       text-align: left; 
       margin-bottom: 20px;
@@ -209,6 +209,10 @@
       border-left-color: #9E9E9E;
     }
 
+    .recap-item.incomplete {
+      border-left-color: #FFA500;
+    }
+
     @media (max-width: 1200px) {
       .main-container {
         flex-direction: column;
@@ -246,8 +250,8 @@
   <div class="main-container">
     <div class="feedback-panel">
       <div id="feedback"></div>
-      <div id="rep-count">Reps: 0</div>
       <div id="set-count">Set: 0</div>
+      <div id="rep-count">Reps: 0</div>
       <div id="stage-indicator">Stage: Ready</div>
     </div>
     
@@ -511,9 +515,62 @@
     let isResting = false;
     let restStartTime = 0;
     let REST_DURATION = 60000; // Default 1 minute rest between sets
+    let workoutStartTime = 0;
+    let mistakes = {};
+    let totalReps = 0;
+    let completedSets = 0;
 
     // Message tracking
     let lastSpokenMessage = null; // Track the last spoken message
+
+    function trackMistake(mistake) {
+      if (!mistakes[mistake]) {
+        mistakes[mistake] = 0;
+      }
+      mistakes[mistake]++;
+    }
+
+    function saveWorkoutSummary() {
+      const workoutEndTime = Date.now();
+      const totalTime = (workoutEndTime - workoutStartTime) / 1000; // Convert to seconds
+      const setsMissed = totalSets - completedSets;
+      
+      // Convert mistakes object to string
+      const mistakesStr = Object.entries(mistakes)
+        .map(([mistake, count]) => `${mistake}: ${count}`)
+        .join('; ');
+
+      // Create CSV content with just the data row
+      const csvContent = [completedSets, setsMissed, totalReps, totalTime, mistakesStr].join(',');
+
+      // Send to server to save
+      fetch('/save_workout_summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          csv_content: csvContent
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          console.log('Workout summary saved successfully');
+          // Redirect to profile page after successful save
+          window.location.href = profileUrl;
+        } else {
+          console.error('Failed to save workout summary');
+          // Still redirect even if save fails
+          window.location.href = profileUrl;
+        }
+      })
+      .catch(error => {
+        console.error('Error saving workout summary:', error);
+        // Redirect even if there's an error
+        window.location.href = profileUrl;
+      });
+    }
 
     function showWorkoutConfig() {
       document.getElementById('workout-config').classList.add('active');
@@ -528,7 +585,11 @@
       repsPerSet = parseInt(document.getElementById('reps').value);
       REST_DURATION = parseInt(document.getElementById('rest-time').value) * 1000;
       currentSet = 1;
+      completedSets = 0;
       workoutStarted = true;
+      workoutStartTime = Date.now();
+      mistakes = {};
+      totalReps = 0;
       document.getElementById('workout-config').classList.remove('active');
       speak(`Starting workout with ${totalSets} sets of ${repsPerSet} reps and ${REST_DURATION/1000} seconds rest`);
       updateSetCounter();
@@ -580,13 +641,24 @@
       // Add current set if workout is in progress
       if (workoutStarted && currentSet <= totalSets) {
         const currentSetItem = document.createElement('div');
-        currentSetItem.className = 'recap-item current';
         const currentReps = currentExercise === "pushup" ? pushupCounter : squatCounter;
-        currentSetItem.innerHTML = `
-          <strong>Set ${currentSet} (Current)</strong><br>
-          ${currentReps}/${repsPerSet} reps completed<br>
-          ${currentExercise === 'pushup' ? 'Push-ups' : 'Squats'}
-        `;
+        
+        // Check if this is an incomplete set
+        if (currentReps > 0 && currentReps < repsPerSet) {
+          currentSetItem.className = 'recap-item incomplete';
+          currentSetItem.innerHTML = `
+            <strong>Set ${currentSet} (Incomplete)</strong><br>
+            ${currentReps}/${repsPerSet} reps completed<br>
+            ${currentExercise === 'pushup' ? 'Push-ups' : 'Squats'}
+          `;
+        } else {
+          currentSetItem.className = 'recap-item current';
+          currentSetItem.innerHTML = `
+            <strong>Set ${currentSet} (Current)</strong><br>
+            ${currentReps}/${repsPerSet} reps completed<br>
+            ${currentExercise === 'pushup' ? 'Push-ups' : 'Squats'}
+          `;
+        }
         recapContent.appendChild(currentSetItem);
       }
 
@@ -607,6 +679,7 @@
       const currentReps = currentExercise === "pushup" ? pushupCounter : squatCounter;
       if (currentReps >= repsPerSet) {
         if (currentSet < totalSets) {
+          completedSets++;
           currentSet++;
           isResting = true;
           restStartTime = Date.now();
@@ -623,8 +696,10 @@
           }
           document.getElementById("rep-count").innerText = "Reps: 0";
         } else {
+          completedSets++;
           speak("Workout complete! Great job!");
           workoutStarted = false;
+          saveWorkoutSummary(); // Save summary when workout is complete
           updateRecap();
         }
       }
@@ -679,100 +754,8 @@
       return [landmarks[idxs[side+"_"+joint]].x, landmarks[idxs[side+"_"+joint]].y];
     }
 
-    function areRequiredPointsVisible(landmarks) {
-      // Check if shoulders and arms are visible
-      const requiredUpperBody = [
-        landmarks[11], // left shoulder
-        landmarks[12], // right shoulder
-        landmarks[13], // left elbow
-        landmarks[14], // right elbow
-        landmarks[15], // left wrist
-        landmarks[16]  // right wrist
-      ];
-
-      // Check if at least one side of the lower body is visible
-      const leftSide = [
-        landmarks[23], // left hip
-        landmarks[25], // left knee
-        landmarks[27]  // left ankle
-      ];
-
-      const rightSide = [
-        landmarks[24], // right hip
-        landmarks[26], // right knee
-        landmarks[28]  // right ankle
-      ];
-
-      // Check if all upper body points are visible
-      const upperBodyVisible = requiredUpperBody.every(point => 
-        point && point.visibility > 0.5
-      );
-
-      // Check if at least one side of lower body is visible
-      const leftSideVisible = leftSide.every(point => 
-        point && point.visibility > 0.5
-      );
-      const rightSideVisible = rightSide.every(point => 
-        point && point.visibility > 0.5
-      );
-
-      return upperBodyVisible && (leftSideVisible || rightSideVisible);
-    }
-
-    function isStanding(landmarks) {
-      const ls_y = landmarks[11].y, rs_y = landmarks[12].y;
-      const lh_y = landmarks[23].y, rh_y = landmarks[24].y;
-      const la_y = landmarks[27].y, ra_y = landmarks[28].y;
-      const lk_y = landmarks[25].y, rk_y = landmarks[26].y;
-      const lw_y = landmarks[15].y, rw_y = landmarks[16].y;
-      
-      const shoulder_y = (ls_y + rs_y)/2;
-      const hip_y = (lh_y + rh_y)/2;
-      const ankle_y = (la_y + ra_y)/2;
-      const knee_y = (lk_y + rk_y)/2;
-      const wrist_y = (lw_y + rw_y)/2;
-
-      // Calculate vertical distances between key points
-      const shoulderToHip = Math.abs(hip_y - shoulder_y);
-      const hipToKnee = Math.abs(knee_y - hip_y);
-      const kneeToAnkle = Math.abs(ankle_y - knee_y);
-
-      // Check if body is in a vertical alignment (standing)
-      const isVertical = shoulderToHip > 0.15 && hipToKnee > 0.15 && kneeToAnkle > 0.15;
-
-      // Check if knees are significantly bent (indicating crouching)
-      const kneeAngle = angle(
-        [landmarks[23].x, landmarks[23].y], // hip
-        [landmarks[25].x, landmarks[25].y], // knee
-        [landmarks[27].x, landmarks[27].y]  // ankle
-      );
-      const isKneesBent = kneeAngle < 150; // If knees are bent more than 30 degrees
-
-      // Check if hips are significantly lower than normal standing position
-      const isHipsLowered = hipToKnee < 0.1; // Hips are closer to knees than normal
-
-      // Person is standing if:
-      // 1. Body is in vertical alignment AND
-      // 2. Wrists are above shoulders AND
-      // 3. Knees are not significantly bent AND
-      // 4. Hips are not significantly lowered
-      return isVertical && isKneesBent && !isHipsLowered;
-    }
-
     function countPushup(landmarks) {
       let errorMessage = null;
-
-      // // First check if all required points are visible
-      // if (!areRequiredPointsVisible(landmarks) && pushupStage === null) {
-      //   return [pushupCounter, "Please make sure your upper body and at least one side of your lower body are fully visible in the frame"];
-      // }
-
-      // // If we're not in resting state and user is standing, prompt to get into position
-      // if (!isResting && pushupStage === null) {
-      //   pushupStage = null;
-      //   pushupCounter = 0;
-      //   return [pushupCounter, "Get into pushup position to start"];
-      // }
 
       const ls = getCoord(landmarks, "left", "shoulder");
       const lh = getCoord(landmarks, "left", "hip");
@@ -796,62 +779,125 @@
       const lka = angle(lh, lk, la);
       const rka = angle(rh, rk, ra);
 
-      const th_up = 150, th_down = 120;
+      const th_up = 160, th_down = 120;
 
       // Calculate proper hand width based on shoulder width
       const minHandWidth = sd * 0.8;  // Hands should be at least 80% of shoulder width apart
       const maxHandWidth = sd * 1.5;  // Hands should not be more than 150% of shoulder width apart
 
-      // right shoulder to right   ankle
+      // if rs, ra, ls, la cannot be seen, return [pushupCounter, "Move into frame"]
+      if (rs[0] === null || ra[0] === null || ls[0] === null || la[0] === null) {
+        return [pushupCounter, "Move into frame"];
+      }
+
+      // Check vertical alignment
       const rightShoulderToRightAnkle = Math.abs(rs[1] - ra[1]);
-      // left shoulder to left ankle
       const leftShoulderToLeftAnkle = Math.abs(ls[1] - la[1]);
       
-      if (pushupStage === null && !isResting) {
+      // Check if person is standing up
+      if ((rightShoulderToRightAnkle > 0.35 || leftShoulderToLeftAnkle > 0.35) && !isResting) {
+        if (pushupStage !== null) {
+          // If they were doing pushups and now standing, handle the incomplete set
+          const currentReps = pushupCounter;
+          if (currentReps > 0 && currentReps < repsPerSet) {
+            // Mark this set as incomplete in the recap
+            const recapContent = document.getElementById('recap-content');
+            // Clear the current set item if it exists
+            const currentSetItems = recapContent.getElementsByClassName('recap-item current');
+            if (currentSetItems.length > 0) {
+              currentSetItems[0].remove();
+            }
+            // Add the incomplete set
+            const currentSetItem = document.createElement('div');
+            currentSetItem.className = 'recap-item incomplete';
+            currentSetItem.innerHTML = `
+              <strong>Set ${currentSet} (Incomplete)</strong><br>
+              ${currentReps}/${repsPerSet} reps completed<br>
+              ${currentExercise === 'pushup' ? 'Push-ups' : 'Squats'}
+            `;
+            recapContent.insertBefore(currentSetItem, recapContent.firstChild);
+          }
+          
+          if (currentSet < totalSets) {
+            currentSet++;
+            isResting = true;
+            restStartTime = Date.now();
+            speak(`Set complete! Take a ${REST_DURATION/1000} second rest before starting set ${currentSet}`);
+            updateSetCounter();
+            // Reset rep counter for new set
+            pushupCounter = 0;
+            pushupStage = null;
+            document.getElementById("rep-count").innerText = "Reps: 0";
+          } else {
+            speak("Workout complete! Great job!");
+            workoutStarted = false;
+            saveWorkoutSummary(); // Save summary when workout is complete
+          }
+        }
+        pushupStage = null;
+        return [pushupCounter, "Get into pushup position!"];
+      }
 
-        if (rightShoulderToRightAnkle > 0.35 || leftShoulderToLeftAnkle > 0.35) {
-          return [pushupCounter, "Get into pushup position!" ];
-        } 
+      // Initial position check
+      if (pushupStage === null && !isResting && (rightShoulderToRightAnkle < 0.35 || leftShoulderToLeftAnkle < 0.35)) {
 
         if ((lha >= th_up && lka >= th_up) || (rha >= th_up && rka >= th_up)) {
           if (wd >= minHandWidth && wd <= maxHandWidth) {
             if (lea >= th_up || rea >= th_up) {
               pushupStage = 'up';
-              return [pushupCounter, "You can start"];
+              return [pushupCounter, "You can start pushing!"];
             } else {
+              trackMistake("Arms not straight");
               return [pushupCounter, "Straighten your arms"];
             }
           } else {
-            if (wd < minHandWidth) errorMessage = "Widen your hands";
-            else if (wd > maxHandWidth) errorMessage = "Bring your hands closer";
+            if (wd < minHandWidth) {
+              trackMistake("Hands too close");
+              errorMessage = "Widen your hands";
+            }
+            else if (wd > maxHandWidth) {
+              trackMistake("Hands too wide");
+              errorMessage = "Bring your hands closer";
+            }
             return [pushupCounter, errorMessage];
           }
         } else {
+          trackMistake("Hips not aligned");
           errorMessage = "Align your hips!";
           return [pushupCounter, errorMessage];
         }
       }
 
-      if (rightShoulderToRightAnkle > 0.35 || leftShoulderToLeftAnkle > 0.35) {
-        pushupStage = null;
-        return [pushupCounter, "Get into pushup position!" ];
-      } 
-
+      // Count reps
       if (pushupStage === 'down' && (lea >= th_up || rea >= th_up)) {
         pushupStage = "up";
         pushupCounter += 1;
+        totalReps += 1;
         lastRepTime = Date.now();
       }
 
       if (pushupStage === 'up' && (lea <= th_down || rea <= th_down)) {
         pushupStage = "down";
       }
-      // to fix
-      if ((rightShoulderToRightAnkle > 0.35 || leftShoulderToLeftAnkle > 0.35) && (pushupStage === 'up' || pushupStage === 'down')) {
-        if (lha < 160 || rha < 160) errorMessage = "Raise your hips!";
-        else if (lha > 200 || rha > 200) errorMessage = "Lower your hips!";
-        // else if (lsa > 100 || rsa > 100) errorMessage = "Arms too wide";
-        // else if (lsa < 60 || rsa < 60) errorMessage = "Arms too close";
+
+      // Form check during exercise
+      if (pushupStage === 'up' || pushupStage === 'down') {
+        if (lha < 160 || rha < 160) {
+          trackMistake("Hips too high");
+          errorMessage = "Raise your hips!";
+        }
+        else if (lha > 200 || rha > 200) {
+          trackMistake("Hips too low");
+          errorMessage = "Lower your hips!";
+        }
+        // else if (lsa > 90 || rsa > 90){
+        //   trackMistake("Elbows too wide");
+        //   errorMessage = "Bring your elbows closer";
+        // }
+        // else if (lsa < 30 || rsa < 30){
+        //   trackMistake("Elbows too close");
+        //   errorMessage = "Widen your elbows";
+        // }
         if (errorMessage) return [pushupCounter, errorMessage];
       }
 
@@ -1008,10 +1054,34 @@
     pose.onResults(onResults);
 
     const camera = new Camera(videoElement, {
-      onFrame: async () => { await pose.send({image: videoElement}); },
-      width: 400, height: 300
+      onFrame: async () => {
+        try {
+          await pose.send({image: videoElement});
+        } catch (error) {
+          console.error('Error in pose detection:', error);
+          // Restart camera if there's an error
+          camera.stop();
+          setTimeout(() => camera.start(), 1000);
+        }
+      },
+      width: 400,
+      height: 300
     });
-    camera.start();
+
+    // Add error handling for camera
+    videoElement.addEventListener('error', (e) => {
+      console.error('Camera error:', e);
+      // Try to restart the camera
+      camera.stop();
+      setTimeout(() => camera.start(), 1000);
+    });
+
+    // Start camera
+    camera.start().catch(error => {
+      console.error('Failed to start camera:', error);
+      // Try to restart after a delay
+      setTimeout(() => camera.start(), 1000);
+    });
   </script>
 </body>
 </html>

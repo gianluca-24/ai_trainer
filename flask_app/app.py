@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import csv
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # For session management
@@ -84,20 +85,57 @@ def signup():
 @app.route("/profile")
 @login_required
 def profile():
-    username = session['username']
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    # Get user information from users.csv
+    user_info = None
     with open('data/users.csv', 'r') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            if row['username'] == username:
-                user = {
+            if row['username'] == session['username']:
+                user_info = {
                     'username': row['username'],
                     'email': row['email'],
                     'age': row['age'],
                     'weight': row['weight'],
                     'height': row['height']
                 }
-                return render_template('profile.html', user=user)
-    return redirect(url_for('login'))
+                break
+    
+    if not user_info:
+        return redirect(url_for('login'))
+    
+    # Read workout history from summary.csv
+    workout_history = []
+    csv_path = os.path.join(os.path.dirname(__file__), 'data', 'summary.csv')
+    
+    if os.path.exists(csv_path):
+        with open(csv_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                try:
+                    # Convert time to minutes and seconds
+                    total_seconds = float(row['Total Time (s)'])
+                    minutes = int(total_seconds // 60)
+                    seconds = int(total_seconds % 60)
+                    time_str = f"{minutes}m {seconds}s"
+                    
+                    workout_history.append({
+                        'sets_completed': row['Sets Completed'],
+                        'sets_missed': row['Sets Missed'],
+                        'total_reps': row['Total Reps'],
+                        'duration': time_str,
+                        'mistakes': row['Mistakes']
+                    })
+                except (ValueError, KeyError) as e:
+                    # Skip invalid rows
+                    continue
+    
+    # Sort workout history by most recent first (assuming newest entries are at the bottom of the file)
+    workout_history.reverse()
+    
+    return render_template("profile.html", user=user_info, workout_history=workout_history)
 
 @app.route("/logout")
 def logout():
@@ -108,6 +146,33 @@ def logout():
 @login_required
 def index():
     return render_template("index.html")
+
+@app.route('/save_workout_summary', methods=['POST'])
+def save_workout_summary():
+    try:
+        data = request.get_json()
+        csv_content = data.get('csv_content')
+        
+        # Create data directory if it doesn't exist
+        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        os.makedirs(data_dir, exist_ok=True)
+        
+        # Path to the summary file
+        summary_file = os.path.join(data_dir, 'summary.csv')
+        
+        # Write header only if file doesn't exist
+        if not os.path.exists(summary_file):
+            with open(summary_file, 'w') as f:
+                f.write('Sets Completed,Sets Missed,Total Reps,Total Time (s),Mistakes\n')
+        
+        # Append the workout data
+        with open(summary_file, 'a') as f:
+            f.write(csv_content + '\n')
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error saving workout summary: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == "__main__":
     # Run on all network interfaces so you can use your phone
