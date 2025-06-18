@@ -88,7 +88,7 @@ def profile():
     if 'username' not in session:
         return redirect(url_for('login'))
     
-    # Get user information from users.csv
+    # Read user information from users.csv
     user_info = None
     with open('data/users.csv', 'r') as f:
         reader = csv.DictReader(f)
@@ -98,8 +98,8 @@ def profile():
                     'username': row['username'],
                     'email': row['email'],
                     'age': row['age'],
-                    'weight': row['weight'],
-                    'height': row['height']
+                    'height': row['height'],
+                    'weight': row['weight']
                 }
                 break
     
@@ -108,34 +108,38 @@ def profile():
     
     # Read workout history from summary.csv
     workout_history = []
-    csv_path = os.path.join(os.path.dirname(__file__), 'data', 'summary.csv')
-    
-    if os.path.exists(csv_path):
-        with open(csv_path, 'r') as f:
+    try:
+        with open('data/summary.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 try:
-                    # Convert time to minutes and seconds
+                    # Convert total time from seconds to a formatted string
                     total_seconds = float(row['Total Time (s)'])
                     minutes = int(total_seconds // 60)
                     seconds = int(total_seconds % 60)
-                    time_str = f"{minutes}m {seconds}s"
+                    duration = f"{minutes}m {seconds}s" if minutes > 0 else f"{seconds}s"
                     
-                    workout_history.append({
-                        'sets_completed': row['Sets Completed'],
-                        'sets_missed': row['Sets Missed'],
-                        'total_reps': row['Total Reps'],
-                        'duration': time_str,
-                        'mistakes': row['Mistakes']
-                    })
+                    # Create workout entry with safe field access
+                    workout = {
+                        'sets_completed': row.get('Sets Completed', '0'),
+                        'sets_missed': row.get('Sets Missed', '0'),
+                        'total_reps': row.get('Total Reps', '0'),
+                        'duration': duration,
+                        'mistakes': row.get('Mistakes', ''),
+                        'score': row.get('Score', '0'),
+                        'supersets': row.get('Supersets', '0')
+                    }
+                    workout_history.append(workout)
                 except (ValueError, KeyError) as e:
-                    # Skip invalid rows
+                    print(f"Error processing workout row: {str(e)}")
                     continue
+    except FileNotFoundError:
+        pass
     
-    # Sort workout history by most recent first (assuming newest entries are at the bottom of the file)
+    # Sort workout history to show most recent first
     workout_history.reverse()
     
-    return render_template("profile.html", user=user_info, workout_history=workout_history)
+    return render_template('profile.html', user=user_info, workout_history=workout_history)
 
 @app.route("/logout")
 def logout():
@@ -157,16 +161,16 @@ def save_workout_summary():
         data_dir = os.path.join(os.path.dirname(__file__), 'data')
         os.makedirs(data_dir, exist_ok=True)
         
-        # Path to the summary file
+        # Define the path to summary.csv
         summary_file = os.path.join(data_dir, 'summary.csv')
         
-        # Write header only if file doesn't exist
-        if not os.path.exists(summary_file):
-            with open(summary_file, 'w') as f:
-                f.write('Sets Completed,Sets Missed,Total Reps,Total Time (s),Mistakes\n')
+        # Check if file exists to determine whether to write header
+        file_exists = os.path.isfile(summary_file)
         
-        # Append the workout data
+        # Write to CSV file
         with open(summary_file, 'a') as f:
+            if not file_exists:
+                f.write('Sets Completed,Sets Missed,Total Reps,Total Time (s),Mistakes,Score,Supersets\n')
             f.write(csv_content + '\n')
         
         return jsonify({'success': True})

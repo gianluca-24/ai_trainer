@@ -1,2 +1,6 @@
-Sets Completed,Sets Missed,Total Reps,Total Time (s),Mistakes
-
+Sets Completed,Sets Missed,Total Reps,Total Time (s),Mistakes,Score,Supersets
+1,0,4,33.668,Hips not aligned: 156; Hips too high: 411; Elbows too close: 281,0,1
+0,1,0,45.713,Hips not aligned: 341; Hands too close: 4; Arms not straight: 1; Hands too wide: 6; Hips too high: 437,0,0
+1,0,4,24.59,Hips not aligned: 63; Hands too wide: 6; Hips too high: 806; Elbows too close: 245,0,1
+1,0,3,73.209,Hips not aligned: 31; Hips too high: 2310; Elbows too wide: 432; Elbows too close: 2,20,1
+1,0,8,48.384,Hips not aligned: 502; Hands too wide: 1; Hips too high: 987; Elbows too wide: 347; Elbows too close: 126,72,1
