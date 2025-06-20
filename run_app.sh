@@ -2,9 +2,6 @@
 unset PYTHONPATH
 export PYTHONNOUSERSITE=True
 
-# Activate the virtual environment
-source .venv/bin/activate
-
 cd flask_app
 
 # Run the Flask app

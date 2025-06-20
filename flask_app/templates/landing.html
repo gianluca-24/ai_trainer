@@ -1,66 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trainer AI - Welcome</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f4f4f4;
-        }
-        .header {
-            background: #333;
-            color: white;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .auth-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-        .auth-buttons a {
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            background: #4CAF50;
-        }
-        .auth-buttons a:hover {
-            background: #45a049;
-        }
-        .main-content {
-            text-align: center;
-            padding: 4rem 2rem;
-        }
-        h1 {
-            font-size: 2.5rem;
-            color: #333;
-            margin-bottom: 1rem;
-        }
-        p {
-            font-size: 1.2rem;
-            color: #666;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PIErO: Push-up Interactive Error Optimizer - Welcome</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+
+    .header {
+      background: #333;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .auth-buttons a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      background: #4CAF50;
+    }
+
+    .auth-buttons a:hover {
+      background: #45a049;
+    }
+
+    .main-content {
+      text-align: center;
+      padding: 0;
+      margin: 0;
+    }
+
+    .hero-image {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .auth-buttons {
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+        padding-top: 1rem;
+      }
+
+      .auth-buttons a {
+        width: 80%;
+        text-align: center;
+        margin: 0.25rem 0;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h2>Trainer AI</h2>
-        <div class="auth-buttons">
-            <a href="{{ url_for('login') }}">Log In</a>
-            <a href="{{ url_for('signup') }}">Sign Up</a>
-        </div>
+  <div class="header">
+    <h2>PIErO: Push-up Interactive Error Optimizer</h2>
+    <div class="auth-buttons">
+      <a href="{{ url_for('login') }}">Log In</a>
+      <a href="{{ url_for('signup') }}">Sign Up</a>
     </div>
-    <div class="main-content">
-        <h1>Welcome to Trainer AI</h1>
-        <p>Your personal AI-powered fitness companion. Get started today and transform your workout experience with real-time feedback and personalized guidance.</p>
-    </div>
+  </div>
+
+  <div class="main-content">
+    <picture>
+      <source media="(max-width: 768px)" srcset="{{ url_for('static', filename='images/background_mobile.png') }}">
+      <img src="{{ url_for('static', filename='images/background.jpg') }}" alt="Trainer AI Welcome Banner" class="hero-image" />
+    </picture>
+  </div>
 </body>
-</html> 
+</html>

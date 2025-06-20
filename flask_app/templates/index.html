@@ -20,7 +20,7 @@
       min-height: 100vh;
     }
     h1 { color: #333; margin-top: 16px; }
-    
+
     .main-container {
       display: flex;
       flex: 1;
@@ -59,98 +59,98 @@
       max-width: 300px;
     }
 
-    #video-container { 
-      position: relative; 
-      width: 100%; 
-      max-width: 800px; 
+    #video-container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
       aspect-ratio: 4 / 3;
     }
-    #output { 
-      width: 100%; 
-      border: 4px solid #333; 
-      border-radius: 16px; 
-      background: #000; 
+    #output {
+      width: 100%;
+      border: 4px solid #333;
+      border-radius: 16px;
+      background: #000;
       box-shadow: 0 4px 24px 0 #0001;
     }
-    #workout-config { 
-      position: absolute; 
-      top: 50%; 
-      left: 50%; 
-      transform: translate(-50%, -50%); 
-      background: rgba(255,255,255,0.95); 
-      padding: 30px; 
-      border-radius: 16px; 
-      z-index: 20; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
-      display: none; 
+    #workout-config {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.95);
+      padding: 30px;
+      border-radius: 16px;
+      z-index: 20;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: none;
       min-width: 300px;
     }
-    #workout-config.active { 
-      display: block; 
+    #workout-config.active {
+      display: block;
     }
-    .config-input { 
-      margin: 15px 0; 
+    .config-input {
+      margin: 15px 0;
     }
-    .config-input label { 
-      display: block; 
-      margin-bottom: 8px; 
+    .config-input label {
+      display: block;
+      margin-bottom: 8px;
       font-size: 16px;
     }
-    .config-input input { 
-      width: 120px; 
-      padding: 8px; 
+    .config-input input {
+      width: 120px;
+      padding: 8px;
       font-size: 16px;
     }
-    .config-buttons { 
-      margin-top: 20px; 
+    .config-buttons {
+      margin-top: 20px;
     }
-    .config-buttons button, .config-buttons a { 
-      margin: 0 8px; 
-      padding: 12px 24px; 
-      border: none; 
-      border-radius: 8px; 
-      cursor: pointer; 
+    .config-buttons button, .config-buttons a {
+      margin: 0 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
       font-size: 16px;
       text-decoration: none;
       display: inline-block;
     }
-    .start-btn { 
-      background: #4CAF50; 
-      color: white; 
+    .start-btn {
+      background: #4CAF50;
+      color: white;
     }
-    .cancel-btn { 
-      background: #f44336; 
-      color: white; 
+    .cancel-btn {
+      background: #f44336;
+      color: white;
     }
-    #feedback { 
-      background: rgba(255,255,255,0.92); 
-      padding: 15px 20px; 
-      border-radius: 12px; 
-      font-size: 25px; 
-      color: #222; 
-      text-align: left; 
+    #feedback {
+      background: rgba(255,255,255,0.92);
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-size: 25px;
+      color: #222;
+      text-align: left;
       margin-bottom: 20px;
-      min-height: 40px; 
+      min-height: 40px;
       box-shadow: 0 2px 8px 0 #0002;
     }
-    #rep-count { 
-      font-size: 24px; 
-      background: rgba(0,0,0,0.65); 
-      color: #fff; 
-      padding: 12px 24px; 
-      border-radius: 12px; 
+    #rep-count {
+      font-size: 24px;
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
       margin-bottom: 10px;
-      letter-spacing: 1px; 
+      letter-spacing: 1px;
       font-weight: bold;
     }
-    #set-count { 
-      font-size: 24px; 
-      background: rgba(0,0,0,0.65); 
-      color: #fff; 
-      padding: 12px 24px; 
-      border-radius: 12px; 
+    #set-count {
+      font-size: 24px;
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
       margin-bottom: 10px;
-      letter-spacing: 1px; 
+      letter-spacing: 1px;
       font-weight: bold;
     }
     #stage-indicator {
@@ -417,7 +417,7 @@
       <div id="stage-indicator">Stage: Ready</div>
       <button id="terminate-workout" onclick="terminateWorkout()">Terminate Workout</button>
     </div>
-    
+
     <div class="video-panel">
       <div id="video-container">
         <canvas id="output" width="800" height="600"></canvas>
@@ -571,7 +571,7 @@
               // Try to convert written numbers
               const writtenNumbers = {
                 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-                'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 
+                'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
                 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
                 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
                 'twenty one': 21, 'twenty two': 22, 'twenty three': 23, 'twenty four': 24, 'twenty five': 25,
@@ -579,7 +579,7 @@
                 'thirty one': 31, 'thirty two': 32, 'thirty three': 33, 'thirty four': 34, 'thirty five': 35,
                 'thirty six': 36, 'thirty seven': 37, 'thirty eight': 38, 'thirty nine': 39, 'forty': 40,
               };
-              
+
               for (const [word, num] of Object.entries(writtenNumbers)) {
                 if (transcript.includes(word)) {
                   document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted word: " + word + " = " + num + ")";
@@ -609,7 +609,7 @@
               // Try to convert written numbers
               const writtenNumbers = {
                 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-                'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 
+                'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
                 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
                 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
                 'twenty one': 21, 'twenty two': 22, 'twenty three': 23, 'twenty four': 24, 'twenty five': 25,
@@ -617,7 +617,7 @@
                 'thirty one': 31, 'thirty two': 32, 'thirty three': 33, 'thirty four': 34, 'thirty five': 35,
                 'thirty six': 36, 'thirty seven': 37, 'thirty eight': 38, 'thirty nine': 39, 'forty': 40,
               };
-              
+
               for (const [word, num] of Object.entries(writtenNumbers)) {
                 if (transcript.includes(word)) {
                   document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted word: " + word + " = " + num + ")";
@@ -652,7 +652,7 @@
                 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90, 'hundred': 100,
                 'one hundred': 100, 'two hundred': 200, 'three hundred': 300
               };
-              
+
               for (const [word, num] of Object.entries(writtenNumbers)) {
                 if (transcript.includes(word)) {
                   document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted word: " + word + " = " + num + ")";
@@ -696,7 +696,7 @@
       if (!recognition) {
         setupSpeechRecognition();
       }
-      
+
       if (isListening) {
         recognition.stop();
         isListening = false;
@@ -741,31 +741,31 @@
       if (camera) {
         camera.stop();
       }
-      
+
       // Update popup content
       document.getElementById('recap-sets-completed').textContent = completedSets;
       document.getElementById('recap-sets-missed').textContent = setsMissed;
       document.getElementById('recap-total-reps').textContent = totalReps;
       document.getElementById('recap-supersets').textContent = supersets;
-      
+
       // Format duration
       const minutes = Math.floor(totalTime / 60);
       const seconds = Math.round(totalTime % 60);
-      const durationStr = minutes > 0 ? 
-        `${minutes}m ${seconds}s` : 
+      const durationStr = minutes > 0 ?
+        `${minutes}m ${seconds}s` :
         `${seconds}s`;
       document.getElementById('recap-duration').textContent = durationStr;
-      
+
       // Update score
       document.getElementById('recap-score').textContent = score;
-      
+
       // Update mistakes
       const mistakesText = Object.entries(mistakes)
         .map(([mistake, count]) => `${mistake}: ${count}`)
         .join(', ');
-      document.getElementById('recap-mistakes').textContent = 
+      document.getElementById('recap-mistakes').textContent =
         mistakesText || 'No corrections needed!';
-      
+
       // Show popup and overlay
       document.querySelector('.popup-overlay').classList.add('active');
       document.querySelector('.workout-recap-popup').classList.add('active');
@@ -774,10 +774,10 @@
     function saveWorkoutSummary() {
       const workoutEndTime = Date.now();
       const totalTime = (workoutEndTime - workoutStartTime) / 1000; // Convert to seconds
-      
+
       // Calculate actual missed sets (excluding supersets)
       const actualMissedSets = totalSets - completedSets;
-      
+
       // Convert mistakes object to string
       const mistakesStr = Object.entries(mistakes)
         .map(([mistake, count]) => `${mistake}: ${count}`)
@@ -789,20 +789,20 @@
       // Calculate workout score
       const timeInMinutes = totalTime / 60;
       const repsPerMinute = totalReps / timeInMinutes;
-      
+
       // Set Factor: 1 + 0.1 * (completedSets - 1)
       const setFactor = 1 + 0.1 * (completedSets - 1);
-      
+
       // Error Penalty: e^(-0.1 * totalErrors)
       const errorPenalty = Math.exp(-0.1 * totalErrors);
-      
+
       // Miss Penalty: e^(-0.2 * missedSets)
       const missPenalty = Math.exp(-0.2 * actualMissedSets);
-      
+
       // Superset Bonus: 1 + 0.2 * supersets
       const supersets = Object.values(completedReps).filter(reps => reps > repsPerSet).length;
       const supersetBonus = 1 + (0.2 * supersets);
-      
+
       // Final Score: Base score * set factor * error penalty * miss penalty * superset bonus
       const baseScore = repsPerMinute * 10; // Multiply by 10 to get a more readable number
       const workoutScore = Math.round(baseScore * setFactor * errorPenalty * missPenalty * supersetBonus);
@@ -915,7 +915,7 @@
         const currentSetItem = document.createElement('div');
         const currentReps = currentExercise === "pushup" ? pushupCounter : squatCounter;
         const isSuperset = currentReps > repsPerSet;
-        
+
         // Check if this is an incomplete set
         if (currentReps > 0 && currentReps < repsPerSet) {
           currentSetItem.className = 'recap-item incomplete';
@@ -996,7 +996,7 @@
           document.getElementById("rep-count").innerText = "Reps: 0";
         } else {
           const remainingSeconds = Math.ceil((REST_DURATION - restTimeElapsed) / 1000);
-          
+
           // Only speak at specific intervals
           if (remainingSeconds === REST_DURATION/1000) {
             // Initial message
@@ -1101,7 +1101,7 @@
             `;
             recapContent.insertBefore(currentSetItem, recapContent.firstChild);
           }
-          
+
           if (currentSet < totalSets) {
             currentSet++;
             isResting = true;
@@ -1162,7 +1162,7 @@
       if (pushupStage === 'up' && (lea <= th_down || rea <= th_down)) {
         pushupStage = "down";
       }
-      
+
       // i want to display: lha, rha, lsa, rsa
       const feedback = `lha: ${lha} rha: ${rha} lsa: ${lsa} rsa: ${rsa}`;
       document.getElementById("feedback").innerText = feedback;
@@ -1218,16 +1218,16 @@
 
     function speak(msg) {
       if (!msg) return;
-      
+
       // Check if this message is in cooldown
       const now = Date.now();
       if (errorCooldowns[msg] && now - errorCooldowns[msg] < ERROR_COOLDOWN_MS) {
         return; // Skip if still in cooldown
       }
-      
+
       // Update cooldown for this message
       errorCooldowns[msg] = now;
-      
+
       // Never speak the same message twice in a row
       if (msg === lastSpokenMessage) {
         return;
@@ -1235,7 +1235,7 @@
 
       // Update the last spoken message
       lastSpokenMessage = msg;
-      
+
       const utterance = new SpeechSynthesisUtterance(msg);
       utterance.lang = "en-US";
       speechSynthesis.speak(utterance);
@@ -1300,7 +1300,7 @@
       if (results.poseLandmarks) {
         drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
         drawLandmarks(ctx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2});
-        
+
         if (!workoutStarted) {
           showWorkoutConfig();
         } else if (!isResting) {

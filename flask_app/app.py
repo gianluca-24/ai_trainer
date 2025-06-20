@@ -1,18 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import csv
 import os
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # For session management
 
-# Create data directory if it doesn't exist
 if not os.path.exists('data'):
     os.makedirs('data')
 
-# Create users.csv if it doesn't exist
 if not os.path.exists('data/users.csv'):
     with open('data/users.csv', 'w', newline='') as f:
         writer = csv.writer(f)
@@ -37,16 +35,16 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
+
         with open('data/users.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row['username'] == username and check_password_hash(row['password'], password):
                     session['username'] = username
                     return redirect(url_for('profile'))
-        
+
         return render_template('login.html', error='Invalid username or password')
-    
+
     return render_template('login.html')
 
 @app.route("/signup", methods=['GET', 'POST'])
@@ -59,27 +57,24 @@ def signup():
         age = request.form['age']
         weight = request.form['weight']
         height = request.form['height']
-        
-        # Check if passwords match
+
         if password != confirm_password:
             return render_template('signup.html', error='Passwords do not match')
-        
-        # Check if username already exists
+
         with open('data/users.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row['username'] == username:
                     return render_template('signup.html', error='Username already exists')
-        
-        # Hash password and save user
+
         hashed_password = generate_password_hash(password)
         with open('data/users.csv', 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([username, email, hashed_password, age, weight, height])
-        
+
         session['username'] = username
         return redirect(url_for('profile'))
-    
+
     return render_template('signup.html')
 
 @app.route("/profile")
@@ -87,8 +82,7 @@ def signup():
 def profile():
     if 'username' not in session:
         return redirect(url_for('login'))
-    
-    # Read user information from users.csv
+
     user_info = None
     with open('data/users.csv', 'r') as f:
         reader = csv.DictReader(f)
@@ -102,25 +96,26 @@ def profile():
                     'weight': row['weight']
                 }
                 break
-    
+
     if not user_info:
         return redirect(url_for('login'))
-    
-    # Read workout history from summary.csv
+
     workout_history = []
-    try:
-        with open('data/summary.csv', 'r') as f:
+    summary_file = 'data/summary.csv'
+    if os.path.exists(summary_file):
+        with open(summary_file, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                if row.get('username') != session['username']:
+                    continue
                 try:
-                    # Convert total time from seconds to a formatted string
                     total_seconds = float(row['Total Time (s)'])
                     minutes = int(total_seconds // 60)
                     seconds = int(total_seconds % 60)
                     duration = f"{minutes}m {seconds}s" if minutes > 0 else f"{seconds}s"
-                    
-                    # Create workout entry with safe field access
+
                     workout = {
+                        'date': row.get('date', 'N/A'),
                         'sets_completed': row.get('Sets Completed', '0'),
                         'sets_missed': row.get('Sets Missed', '0'),
                         'total_reps': row.get('Total Reps', '0'),
@@ -130,16 +125,43 @@ def profile():
                         'supersets': row.get('Supersets', '0')
                     }
                     workout_history.append(workout)
-                except (ValueError, KeyError) as e:
-                    print(f"Error processing workout row: {str(e)}")
+                except (ValueError, KeyError):
                     continue
-    except FileNotFoundError:
-        pass
-    
-    # Sort workout history to show most recent first
+
+    # Global and Personal score logic
+    global_scores_raw = {}
+    personal_best = {'score': 0, 'date': None}
+
+    if os.path.exists(summary_file):
+        with open(summary_file, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                try:
+                    score = int(row.get('Score', 0))
+                    username = row.get('username')
+                    date = row.get('date', 'N/A')
+
+                    # Global
+                    if username not in global_scores_raw or score > global_scores_raw[username]['score']:
+                        global_scores_raw[username] = {'username': username, 'score': score}
+
+                    # Personal
+                    if username == session['username'] and score > personal_best['score']:
+                        personal_best['score'] = score
+                        personal_best['date'] = date
+                except ValueError:
+                    continue
+
+    global_scores = sorted(global_scores_raw.values(), key=lambda x: x['score'], reverse=True)[:3]
     workout_history.reverse()
-    
-    return render_template('profile.html', user=user_info, workout_history=workout_history)
+
+    return render_template(
+        'profile.html',
+        user=user_info,
+        workout_history=workout_history,
+        global_scores=global_scores,
+        personal_best=personal_best
+    )
 
 @app.route("/logout")
 def logout():
@@ -151,33 +173,101 @@ def logout():
 def index():
     return render_template("index.html")
 
+@app.route("/update_profile", methods=["POST"])
+@login_required
+def update_profile():
+    section = request.form.get("section")
+    current_username = session["username"]
+    fieldnames = ["username", "email", "password", "age", "weight", "height"]
+    user_file = "data/users.csv"
+
+    users = []
+    updated = False
+
+    with open(user_file, "r", newline='') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            for field in fieldnames:
+                if field not in row:
+                    row[field] = ""
+
+            if row["username"] == current_username:
+                if section == "personal":
+                    email = request.form.get("email")
+                    age = request.form.get("age")
+                    current_password = request.form.get("current_password")
+                    new_password = request.form.get("new_password")
+                    confirm_password = request.form.get("confirm_password")
+
+                    if email:
+                        row["email"] = email
+                    if age:
+                        row["age"] = age
+
+                    if new_password or confirm_password:
+                        if not current_password:
+                            flash("Please enter your current password to change it.", "danger")
+                            return redirect(url_for("profile"))
+
+                        if not check_password_hash(row["password"], current_password):
+                            flash("Current password is incorrect.", "danger")
+                            return redirect(url_for("profile"))
+
+                        if new_password != confirm_password:
+                            flash("New passwords do not match.", "danger")
+                            return redirect(url_for("profile"))
+
+                        row["password"] = generate_password_hash(new_password)
+
+                elif section == "physical":
+                    height = request.form.get("height")
+                    weight = request.form.get("weight")
+                    if height:
+                        row["height"] = height
+                    if weight:
+                        row["weight"] = weight
+
+                updated = True
+
+            users.append(row)
+
+    if updated:
+        with open(user_file, "w", newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(users)
+        flash("Profile updated successfully.", "success")
+    else:
+        flash("User not found or update failed.", "danger")
+
+    return redirect(url_for("profile"))
+
 @app.route('/save_workout_summary', methods=['POST'])
+@login_required
 def save_workout_summary():
     try:
         data = request.get_json()
         csv_content = data.get('csv_content')
-        
-        # Create data directory if it doesn't exist
+        username = session['username']
+        current_date = datetime.now().strftime('%Y-%m-%d')
+
         data_dir = os.path.join(os.path.dirname(__file__), 'data')
         os.makedirs(data_dir, exist_ok=True)
-        
-        # Define the path to summary.csv
         summary_file = os.path.join(data_dir, 'summary.csv')
-        
-        # Check if file exists to determine whether to write header
+
         file_exists = os.path.isfile(summary_file)
-        
-        # Write to CSV file
-        with open(summary_file, 'a') as f:
+
+        with open(summary_file, 'a', newline='') as f:
+            writer = csv.writer(f)
             if not file_exists:
-                f.write('Sets Completed,Sets Missed,Total Reps,Total Time (s),Mistakes,Score,Supersets\n')
-            f.write(csv_content + '\n')
-        
+                writer.writerow(['username', 'date', 'Sets Completed', 'Sets Missed', 'Total Reps', 'Total Time (s)', 'Mistakes', 'Score', 'Supersets'])
+            row = [username, current_date] + csv_content.split(',')
+            writer.writerow(row)
+
         return jsonify({'success': True})
     except Exception as e:
         print(f"Error saving workout summary: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == "__main__":
-    # Run on all network interfaces so you can use your phone
     app.run(host="0.0.0.0", port=5050, debug=True)

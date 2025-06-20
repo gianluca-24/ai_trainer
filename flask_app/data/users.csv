@@ -1,2 +1,2 @@
 username,email,password,age,weight,height
-gianlu,gluca@gmail.com,scrypt:32768:8:1$nIHqVPVcpNsjwZDA$833c69ea9a22ebd783e174a45ad80d594a016781acc5a3425606c045df0262e7243525d851fa835ad5226eb448e2b326e535d68652d9a356b3a6a3275f942380,23,94,185
+aleibrnt,andre.leibrant@gmx.de,pbkdf2:sha256:150000$NJM1Lgme$d2c26c4aeed0723efda924e01faf304e94973935bcd33ea5406c81bc248c24c1,27,77,182

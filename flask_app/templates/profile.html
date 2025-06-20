@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Profile - Trainer</title>
     <style>
         body {
@@ -11,6 +11,7 @@
             margin: 0;
             padding: 0;
         }
+
         .header {
             background: #333;
             color: white;
@@ -19,9 +20,11 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .header h2 {
             margin: 0;
         }
+
         .logout-btn {
             color: white;
             text-decoration: none;
@@ -29,47 +32,107 @@
             border-radius: 4px;
             background: #dc3545;
         }
+
         .logout-btn:hover {
             background: #c82333;
         }
+
         .profile-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 2rem auto;
             padding: 2rem;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
+        .scoreboard-container {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .scoreboard-global, .scoreboard-personal {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .scoreboard-global h3, .scoreboard-personal h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .scoreboard-global ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .scoreboard-global li {
+            margin: 0.5rem 0;
+            color: #666;
+        }
+
+        .scoreboard-personal p {
+            margin: 0.5rem 0;
+            color: #666;
+        }
+
         .profile-header {
             text-align: center;
             margin-bottom: 2rem;
         }
+
         .profile-info {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
+
         .info-group {
             padding: 1rem;
             background: #f8f9fa;
             border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
+
         .info-group h3 {
             margin: 0 0 0.5rem 0;
             color: #333;
         }
+
         .info-group p {
             margin: 0;
             color: #666;
         }
+
+        .info-group button {
+            margin-top: 1rem;
+            padding: 0.4rem 0.8rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+
+        .info-group button:hover {
+            background: #0056b3;
+        }
+
         .start-training {
             display: block;
             width: 100%;
             max-width: 300px;
             margin: 2rem auto;
             padding: 1.2rem;
-            background: #4CAF50;
+            background: #4caf50;
             color: white;
             text-align: center;
             text-decoration: none;
@@ -79,68 +142,89 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: transform 0.2s, box-shadow 0.2s;
         }
+
         .start-training:hover {
             background: #45a049;
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
+
         .workout-history {
             margin-top: 3rem;
         }
+
         .workout-history h2 {
             text-align: center;
             color: #333;
             margin-bottom: 1.5rem;
         }
+
         .workout-card {
-            background: #fff;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(0, 255, 128, 0.05), rgba(0, 128, 64, 0.03));
+            border-radius: 12px;
             padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-left: 4px solid #4CAF50;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 255, 128, 0.2), 0 0 20px rgba(0, 255, 128, 0.1);
+            border-left: 4px solid #00e676;
+            backdrop-filter: blur(6px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
         }
+
+        .workout-card:hover {
+            transform: translateY(-6px) rotateX(1deg);
+            box-shadow: 0 6px 20px rgba(0, 255, 128, 0.3), 0 0 30px rgba(0, 255, 128, 0.2);
+        }
+
         .workout-card h3 {
             margin: 0 0 1rem 0;
             color: #333;
             font-size: 1.2rem;
         }
+
         .workout-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 1rem;
             margin-bottom: 1rem;
         }
+
         .stat-item {
             background: #f8f9fa;
             padding: 0.8rem;
             border-radius: 4px;
         }
+
         .stat-item strong {
             display: block;
             color: #666;
             font-size: 0.9rem;
             margin-bottom: 0.3rem;
         }
+
         .stat-item span {
             color: #333;
             font-size: 1.1rem;
         }
+
         .mistakes-list {
             background: #fff3cd;
             padding: 1rem;
             border-radius: 4px;
             margin-top: 1rem;
         }
+
         .mistakes-list h4 {
             margin: 0 0 0.5rem 0;
             color: #856404;
         }
+
         .mistakes-list p {
             margin: 0;
             color: #666;
             font-size: 0.9rem;
         }
+
         .no-workouts {
             text-align: center;
             color: #666;
@@ -148,70 +232,228 @@
             background: #f8f9fa;
             border-radius: 8px;
         }
+
+        .flash {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .flash.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Modal */
+        #editModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 400px;
+            margin: 10% auto;
+            position: relative;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+        }
+
+        .modal-content input,
+        .modal-content label {
+            width: 100%;
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content button {
+            margin-right: 1rem;
+        }
+
+        /* Flex layout for Global | Middle | Personal Best */
+        .dashboard-flex {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            justify-content: space-between;
+            align-items: stretch;
+            flex-wrap: nowrap;
+        }
+
+        .middle-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            flex-basis: 35%;
+        }
+
+        .card {
+            background: #fefefe;
+            padding: 1.2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .scoreboard-global ul,
+        .scoreboard-personal ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 1rem;
+        }
+
+        .scoreboard-global li {
+            background: #eaf4ff;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .medal {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background: gold;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.85rem;
+        }
+
+        .scoreboard-global {
+            flex-basis: 25%;
+        }
+
+        .scoreboard-personal {
+            flex-basis: 25%;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-flex {
+                flex-direction: column;
+            }
+
+            .scoreboard-global,
+            .middle-column,
+            .scoreboard-personal {
+                flex: 1 1 100%;
+            }
+        }
+
     </style>
+
 </head>
 <body>
     <div class="header">
-        <h2>Pushup Trainer</h2>
+        <h2>PIErO: Push-up Interactive Error Optimizer</h2>
         <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
     </div>
+
     <div class="profile-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div class="profile-header">
             <h1>Welcome, {{ user.username }}!</h1>
         </div>
-        <div class="profile-info">
-            <div class="info-group">
-                <h3>Personal Information</h3>
-                <p>Email: {{ user.email }}</p>
-                <p>Age: {{ user.age }}</p>
+
+           <div class="dashboard-flex">
+            <!-- LEFT -->
+            <div class="card scoreboard-global">
+                <h3>🌍 Global Leaderboard</h3>
+                <ul>
+                    {% for entry in global_scores %}
+                        <li><span class="medal">{{ loop.index }}</span><strong>{{ entry.username }}</strong> — {{ entry.score }}</li>
+                    {% endfor %}
+                </ul>
             </div>
-            <div class="info-group">
-                <h3>Physical Stats</h3>
-                <p>Height: {{ user.height }} cm</p>
-                <p>Weight: {{ user.weight }} kg</p>
+
+            <!-- CENTER -->
+            <div class="middle-column">
+                <div class="card info-group">
+                    <h3>🧍 Personal Information</h3>
+                    <p>Email: {{ user.email }}</p>
+                    <p>Age: {{ user.age }}</p>
+                    <button onclick="openModal('personal')">Update</button>
+                </div>
+                <div class="card info-group">
+                    <h3>📊 Physical Stats</h3>
+                    <p>Height: {{ user.height }} cm</p>
+                    <p>Weight: {{ user.weight }} kg</p>
+                    <button onclick="openModal('physical')">Update</button>
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="card scoreboard-personal">
+                <h3>🏅 Your Personal Best</h3>
+                {% if personal_best.date %}
+                    <p>Date: {{ personal_best.date }}</p>
+                    <p>Score: {{ personal_best.score }}</p>
+                {% else %}
+                    <p>No personal workout data available.</p>
+                {% endif %}
             </div>
         </div>
+
         <a href="{{ url_for('index') }}" class="start-training">Start Workout</a>
 
         <div class="workout-history">
             <h2>Workout History</h2>
             {% if workout_history %}
                 {% for workout in workout_history %}
-                <div class="workout-card">
-                    <h3>Workout Session #{{ loop.revindex }}</h3>
-                    <div class="workout-stats">
-                        <div class="stat-item">
-                            <strong>Sets Completed</strong>
-                            <span>{{ workout.sets_completed }}</span>
+                    <div class="workout-card">
+                        <h3>Session #{{ loop.revindex }}</h3>
+                        <p style="color:#666; font-size: 0.9rem;">Date: {{ workout.date }}</p>
+                        <div class="workout-stats">
+                            <div class="stat-item"><strong>Sets Completed</strong><span>{{ workout.sets_completed }}</span></div>
+                            <div class="stat-item"><strong>Sets Missed</strong><span>{{ workout.sets_missed }}</span></div>
+                            <div class="stat-item"><strong>Total Reps</strong><span>{{ workout.total_reps }}</span></div>
+                            <div class="stat-item"><strong>Supersets</strong><span>{{ workout.supersets }}</span></div>
+                            <div class="stat-item"><strong>Duration</strong><span>{{ workout.duration }}</span></div>
+                            <div class="stat-item"><strong>Score</strong><span>{{ workout.score }}</span></div>
                         </div>
-                        <div class="stat-item">
-                            <strong>Sets Missed</strong>
-                            <span>{{ workout.sets_missed }}</span>
-                        </div>
-                        <div class="stat-item">
-                            <strong>Total Reps</strong>
-                            <span>{{ workout.total_reps }}</span>
-                        </div>
-                        <div class="stat-item">
-                            <strong>Supersets</strong>
-                            <span>{{ workout.supersets }}</span>
-                        </div>
-                        <div class="stat-item">
-                            <strong>Duration</strong>
-                            <span>{{ workout.duration }}</span>
-                        </div>
-                        <div class="stat-item">
-                            <strong>Score</strong>
-                            <span>{{ workout.score }}</span>
-                        </div>
+                        {% if workout.mistakes %}
+                            <div class="mistakes-list">
+                                <h4>Form Corrections</h4>
+                                <p>{{ workout.mistakes }}</p>
+                            </div>
+                        {% endif %}
                     </div>
-                    {% if workout.mistakes %}
-                    <div class="mistakes-list">
-                        <h4>Form Corrections</h4>
-                        <p>{{ workout.mistakes }}</p>
-                    </div>
-                    {% endif %}
-                </div>
                 {% endfor %}
             {% else %}
                 <div class="no-workouts">
@@ -220,5 +462,40 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Edit Info</h3>
+            <form method="POST" action="{{ url_for('update_profile') }}">
+                <input type="hidden" name="section" id="sectionType">
+                <div id="personalFields">
+                    <label>Username:<input type="text" name="username" value="{{ user.username }}"></label>
+                    <label>Email:<input type="email" name="email" value="{{ user.email }}"></label>
+                    <label>Age:<input type="number" name="age" value="{{ user.age }}"></label>
+                    <label>Current Password:<input type="password" name="current_password"></label>
+                    <label>New Password:<input type="password" name="new_password"></label>
+                    <label>Confirm New Password:<input type="password" name="confirm_password"></label>
+                </div>
+                <div id="physicalFields" style="display:none;">
+                    <label>Height (cm):<input type="number" name="height" value="{{ user.height }}"></label>
+                    <label>Weight (kg):<input type="number" name="weight" value="{{ user.weight }}"></label>
+                </div>
+                <button type="submit">Save</button>
+                <button type="button" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        function openModal(type) {
+            const modal = document.getElementById('editModal');
+            modal.style.display = 'block';
+            document.getElementById('sectionType').value = type;
+            document.getElementById('modalTitle').innerText = type === 'personal' ? 'Edit Personal Information' : 'Edit Physical Stats';
+            document.getElementById('personalFields').style.display = type === 'personal' ? 'block' : 'none';
+            document.getElementById('physicalFields').style.display = type === 'physical' ? 'block' : 'none';
+        }
+        function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+    </script>
 </body>
-</html> 
+</html>
