@@ -1,2 +1,3 @@
 username,email,password,age,weight,height
 aleibrnt,andre.leibrant@gmx.de,pbkdf2:sha256:150000$NJM1Lgme$d2c26c4aeed0723efda924e01faf304e94973935bcd33ea5406c81bc248c24c1,27,77,182
+gianlu,giallu24@gmail.com,scrypt:32768:8:1$FR4TtLMCRwNu4aDb$b51aaad2a472ca01b025283301523d36aeff267d05fe779efd37a5bb52d5b00a6d281f0f57bbfce2968599fb03019d3650f57086412f7b5b3aab0c4a6acefb7f,23,94,185

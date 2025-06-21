@@ -405,6 +405,74 @@
     .popup-overlay.active {
       display: block;
     }
+
+    #disclaimer-popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.98);
+      padding: 40px;
+      border-radius: 16px;
+      z-index: 30;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: none;
+      max-width: 600px;
+      width: 90%;
+      text-align: left;
+    }
+    #disclaimer-popup.active {
+      display: block;
+    }
+    #disclaimer-popup h2 {
+      color: #333;
+      margin-top: 0;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    #disclaimer-popup .instruction-section {
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #4CAF50;
+    }
+    #disclaimer-popup .instruction-section h3 {
+      color: #2e7d32;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    #disclaimer-popup .voice-commands {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    #disclaimer-popup .voice-command {
+      background: #e8f5e9;
+      color: #1b5e20;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    #disclaimer-popup .disclaimer-buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+    #disclaimer-popup .okay-btn {
+      background: #4CAF50;
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #disclaimer-popup .okay-btn:hover {
+      background: #45a049;
+    }
   </style>
 </head>
 <body>
@@ -433,12 +501,46 @@
             <input type="number" id="reps" min="1" max="100" value="10">
           </div>
           <div class="config-input">
-            <label for="rest-time">Rest Time (seconds):</label>
+            <label for="rest-time">Rest Time (min. 60 seconds):</label>
             <input type="number" id="rest-time" min="10" max="300" value="60">
           </div>
           <div class="config-buttons">
             <button class="start-btn" onclick="startWorkout()">Start Workout</button>
             <a class="cancel-btn" href="{{ url_for('profile') }}" class="start-training">Cancel</a>
+          </div>
+        </div>
+        <div id="disclaimer-popup">
+          <h2>Workout Instructions</h2>
+          <div class="instruction-section">
+            <h3>📹 Camera Positioning</h3>
+            <p>Position your camera at a <strong>45-degree angle</strong> to capture your full body during the workout. Make sure you have enough space to perform the exercises safely.</p>
+          </div>
+          <div class="instruction-section">
+            <h3>🎤 Voice Control Commands</h3>
+            <p>You can use voice commands to configure your workout. Say these words clearly:</p>
+            <div class="voice-commands">
+              <span class="voice-command">repetitions</span>
+              <span class="voice-command">sets</span>
+              <span class="voice-command">timer</span>
+              <span class="voice-command">start</span>
+              <span class="voice-command">cancel</span>
+              <span class="voice-command">ok</span>
+            </div>
+            <p><em>You can also say "ok" to close this instruction popup using voice control.</em></p>
+          </div>
+          <div class="instruction-section">
+            <h3>🕒 Rest Period Commands</h3>
+            <p>During rest periods, you can provide feedback on the set difficulty:</p>
+            <div class="voice-commands">
+              <span class="voice-command">good</span>
+              <span class="voice-command">easy</span>
+              <span class="voice-command">difficult</span>
+              <span class="voice-command">terminate</span>
+            </div>
+            <p><em>Your feedback helps adjust the workout to your level - adding sets if too easy or reducing reps if too difficult.</em></p>
+          </div>
+          <div class="disclaimer-buttons">
+            <button class="okay-btn" onclick="closeDisclaimer()">Okay</button>
           </div>
         </div>
         <div id="controls">
@@ -555,7 +657,7 @@
           }, 500);
 
           // Handle voice commands
-          if (transcript.includes('number of repetitions')) {
+          if (transcript.includes('repetitions')) {
             // Try to find numbers in the transcript
             const numberMatch = transcript.match(/\d+/);
             if (numberMatch) {
@@ -593,7 +695,7 @@
                 }
               }
             }
-          } else if (transcript.includes('number of sets')) {
+          } else if (transcript.includes('sets')) {
             // Try to find numbers in the transcript
             const numberMatch = transcript.match(/\d+/);
             if (numberMatch) {
@@ -631,19 +733,19 @@
                 }
               }
             }
-          } else if (transcript.includes('rest time') || transcript.includes('set rest time')) {
+          } else if (transcript.includes('timer') || transcript.includes('set rest time')) {
             // Try to find numbers in the transcript
             const numberMatch = transcript.match(/\d+/);
             if (numberMatch) {
               const restTime = parseInt(numberMatch[0]);
               document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted number: " + restTime + ")";
-              if (restTime >= 10 && restTime <= 300) {
+              if (restTime >= 60 && restTime <= 300) {
                 document.getElementById('rest-time').value = restTime;
                 speak(`Rest time set to ${restTime} seconds`);
                 recognition.stop();
                 setTimeout(() => recognition.start(), 100);
               } else {
-                speak(`Please set rest time between 10 and 300 seconds`);
+                speak(`Please set rest time between 60 and 300 seconds`);
               }
             } else {
               // Try to convert written numbers
@@ -656,24 +758,44 @@
               for (const [word, num] of Object.entries(writtenNumbers)) {
                 if (transcript.includes(word)) {
                   document.getElementById("feedback").innerText = "Heard: " + transcript + " (Extracted word: " + word + " = " + num + ")";
-                  if (num >= 10 && num <= 300) {
+                  if (num >= 60 && num <= 300) {
                     document.getElementById('rest-time').value = num;
                     speak(`Rest time set to ${num} seconds`);
                     recognition.stop();
                     setTimeout(() => recognition.start(), 100);
                   } else {
-                    speak(`Please set rest time between 10 and 300 seconds`);
+                    speak(`Please set rest time between 60 and 300 seconds`);
                   }
                   break;
                 }
               }
             }
-          } else if (transcript.includes('start workout')) {
+          } else if (transcript.includes('start')) {
             startWorkout();
             recognition.stop();
             setTimeout(() => recognition.start(), 100);
           } else if (transcript.includes('cancel')) {
             cancelConfig();
+            recognition.stop();
+            setTimeout(() => recognition.start(), 100);
+          } else if (transcript.includes('ok')) {
+            closeDisclaimer();
+            recognition.stop();
+            setTimeout(() => recognition.start(), 100);
+          } else if (transcript.includes('terminate') && isResting) {
+            terminateWorkout();
+            recognition.stop();
+            setTimeout(() => recognition.start(), 100);
+          } else if (transcript.includes('good') && isResting && waitingForFeedback) {
+            handleRestFeedback('good');
+            recognition.stop();
+            setTimeout(() => recognition.start(), 100);
+          } else if (transcript.includes('easy') && isResting && waitingForFeedback) {
+            handleRestFeedback('easy');
+            recognition.stop();
+            setTimeout(() => recognition.start(), 100);
+          } else if (transcript.includes('difficult') && isResting && waitingForFeedback) {
+            handleRestFeedback('difficult');
             recognition.stop();
             setTimeout(() => recognition.start(), 100);
           }
@@ -700,11 +822,11 @@
       if (isListening) {
         recognition.stop();
         isListening = false;
-        speak('Voice control disabled');
+        // speak('Voice control disabled');
       } else {
         recognition.start();
         isListening = true;
-        speak('Voice control enabled. You can say "number of sets" or "number of repetitions"');
+        speak('Position your camera at approximately a 45-degree angle.. You can say "sets", "repetitions", "timer", to configure your workout. Say "start" to start the workout. Say "cancel" to go back. During rest time: say "good" to keep the same settings, "easy" to add more sets, or "difficult" to reduce reps... You can also say "terminate" to end the workout... Say "ok" to close this instruction popup.');
       }
     }
 
@@ -726,6 +848,10 @@
     const errorCooldowns = {}; // Key: error message, Value: last spoken time
     const ERROR_COOLDOWN_MS = 3000; // Minimum 3s between the same message
 
+    // Disclaimer state
+    let disclaimerShown = false;
+    let cameraStarted = false;
+
     function trackMistake(mistake) {
       if (!mistakes[mistake]) {
         mistakes[mistake] = 0;
@@ -735,6 +861,47 @@
 
     // Add completedReps tracking
     let completedReps = {};
+
+    // Rest feedback tracking
+    let waitingForFeedback = false;
+    let feedbackAsked = false;
+
+    function handleRestFeedback(feedback) {
+      waitingForFeedback = false;
+      feedbackAsked = true;
+      
+      switch(feedback) {
+        case 'good':
+          speak('Great! Keep up the good work');
+          break;
+        case 'easy':
+          // Add one more set
+          totalSets += 1;
+          speak(`That was easy! I've added one more set. You now have ${totalSets} total sets`);
+          break;
+        case 'difficult':
+          // Decrease reps by 2 (minimum 1)
+          repsPerSet = Math.max(1, repsPerSet - 2);
+          speak(`That was tough! I've reduced the reps to ${repsPerSet} for the remaining sets`);
+          break;
+      }
+      
+      // Update the set counter display and recap
+      updateSetCounter();
+      updateRecap();
+    }
+
+    function getErrorThreshold(errorMessage) {
+      // Define error-specific thresholds
+      if (errorMessage === "Raise your hips!") {
+        return 120;
+      } else if (errorMessage === "Bring your elbows closer") {
+        return 120;
+      } else if (errorMessage === "Lower your hips!") {
+        return 120;
+      }
+      return 120; // default threshold
+    }
 
     function showWorkoutRecap(completedSets, setsMissed, totalReps, totalTime, mistakes, score, supersets) {
       // Stop the camera when showing recap
@@ -759,9 +926,13 @@
       // Update score
       document.getElementById('recap-score').textContent = score;
 
-      // Update mistakes
+      // Update mistakes with normalized values
       const mistakesText = Object.entries(mistakes)
-        .map(([mistake, count]) => `${mistake}: ${count}`)
+        .map(([mistake, count]) => {
+          const threshold = getErrorThreshold(mistake);
+          const normalizedCount = Math.ceil(count / threshold);
+          return `${mistake}: ${normalizedCount}`;
+        })
         .join(', ');
       document.getElementById('recap-mistakes').textContent =
         mistakesText || 'No corrections needed!';
@@ -778,9 +949,13 @@
       // Calculate actual missed sets (excluding supersets)
       const actualMissedSets = totalSets - completedSets;
 
-      // Convert mistakes object to string
+      // Convert mistakes object to string with normalized values
       const mistakesStr = Object.entries(mistakes)
-        .map(([mistake, count]) => `${mistake}: ${count}`)
+        .map(([mistake, count]) => {
+          const threshold = getErrorThreshold(mistake);
+          const normalizedCount = Math.ceil(count / threshold);
+          return `${mistake}: ${normalizedCount}`;
+        })
         .join('; ');
 
       // Calculate total number of errors
@@ -861,6 +1036,9 @@
       workoutStartTime = Date.now();
       mistakes = {};
       totalReps = 0;
+      // Reset feedback variables
+      waitingForFeedback = false;
+      feedbackAsked = false;
       document.getElementById('workout-config').classList.remove('active');
       speak(`Starting workout with ${totalSets} sets of ${repsPerSet} reps and ${REST_DURATION/1000} seconds rest`);
       updateSetCounter();
@@ -958,8 +1136,20 @@
           currentSet++;
           isResting = true;
           restStartTime = Date.now();
+          feedbackAsked = false; // Reset feedback flag for new rest period
           const isSuperset = currentReps > repsPerSet;
           speak(`Set complete! ${isSuperset ? 'Great superset!' : ''} Take a ${REST_DURATION/1000} second rest before starting set ${currentSet}`);
+          
+          // Ask for feedback if not the last set
+          if (currentSet <= totalSets) {
+            setTimeout(() => {
+              if (isResting && !feedbackAsked) {
+                waitingForFeedback = true;
+                speak('How did that set feel?');
+              }
+            }, 3000); // Ask after 3 seconds of rest
+          }
+          
           updateSetCounter();
           updateRecap();
           // Reset rep counter for new set
@@ -972,6 +1162,7 @@
           }
           document.getElementById("rep-count").innerText = "Reps: 0";
         } else {
+          // Remove duplicate workout complete message
           completedSets++;
           completedReps[currentSet] = currentReps; // Store the actual reps completed
           const isSuperset = currentReps > repsPerSet;
@@ -988,6 +1179,8 @@
         const restTimeElapsed = Date.now() - restStartTime;
         if (restTimeElapsed >= REST_DURATION) {
           isResting = false;
+          waitingForFeedback = false; // Reset feedback state
+          feedbackAsked = false; // Reset feedback flag
           const endMessage = `Rest period over. Get into ${currentExercise === 'pushup' ? 'pushup' : 'squat'} position to start set ${currentSet}`;
           speak(endMessage);
           document.getElementById("feedback").innerText = endMessage;
@@ -1106,14 +1299,26 @@
             currentSet++;
             isResting = true;
             restStartTime = Date.now();
+            feedbackAsked = false; // Reset feedback flag for new rest period
             speak(`Set complete! Take a ${REST_DURATION/1000} second rest before starting set ${currentSet}`);
+            
+            // Ask for feedback if not the last set
+            if (currentSet <= totalSets) {
+              setTimeout(() => {
+                if (isResting && !feedbackAsked) {
+                  waitingForFeedback = true;
+                  speak('How did that set feel? Say "good" to keep the same settings, "easy" to add more sets, or "difficult" to reduce reps. You can also say "terminate" to end the workout.');
+                }
+              }, 3000); // Ask after 3 seconds of rest
+            }
+            
             updateSetCounter();
+            updateRecap();
             // Reset rep counter for new set
             pushupCounter = 0;
             pushupStage = null;
             document.getElementById("rep-count").innerText = "Reps: 0";
           } else {
-            speak("Workout complete! Great job!");
             workoutStarted = false;
           }
         }
@@ -1124,29 +1329,41 @@
       // Initial position check
       if (pushupStage === null && !isResting && (rightHipToRightAnkle < 0.25 || leftHipToLeftAnkle < 0.25)) {
 
-        if ((lha >= th_up && lka >= th_up) || (rha >= th_up && rka >= th_up)) {
+        if ((lha >= 150 && lka >= 150) || (rha >= 150 && rka >= 150)) {
           if (wd >= minHandWidth && wd <= maxHandWidth) {
             if (lea >= th_up || rea >= th_up) {
               pushupStage = 'up';
               return [pushupCounter, "You can start pushing!"];
             } else {
-              trackMistake("Arms not straight");
+              trackMistake("Straighten your arms");
               return [pushupCounter, "Straighten your arms"];
             }
           } else {
             if (wd < minHandWidth) {
-              trackMistake("Hands too close");
+              trackMistake("Widen your hands");
               errorMessage = "Widen your hands";
             }
             else if (wd > maxHandWidth) {
-              trackMistake("Hands too wide");
+              trackMistake("Bring your hands closer");
               errorMessage = "Bring your hands closer";
             }
             return [pushupCounter, errorMessage];
           }
         } else {
-          trackMistake("Hips not aligned");
-          errorMessage = "Align your hips!";
+          // Check if hips are too high or too low
+          if (lha < 155 || rha < 155) {
+            trackMistake("Raise your hips!");
+            errorMessage = "Raise your hips!";
+          } 
+          else if (lha > 177 || rha > 177) {
+            trackMistake("Lower your hips!");
+            errorMessage = "Lower your hips!";
+          } 
+          else {
+            // Fallback for other alignment issues
+            trackMistake("Align your hips!");
+            errorMessage = "Align your hips!";
+          }
           return [pushupCounter, errorMessage];
         }
       }
@@ -1163,26 +1380,26 @@
         pushupStage = "down";
       }
 
-      // i want to display: lha, rha, lsa, rsa
-      const feedback = `lha: ${lha} rha: ${rha} lsa: ${lsa} rsa: ${rsa}`;
-      document.getElementById("feedback").innerText = feedback;
+      // // i want to display: lha, rha, lsa, rsa
+      // const feedback = `lha: ${lha} rha: ${rha} lsa: ${lsa} rsa: ${rsa}`;
+      // document.getElementById("feedback").innerText = feedback;
 
       // Form check during exercise
       if (pushupStage === 'up' || pushupStage === 'down') {
-        if (lha < 150 || rha < 150) {
-          trackMistake("Hips too high");
+        if (lha < 160 || rha < 160) {
+          trackMistake("Raise your hips!");
           errorMessage = "Raise your hips!";
         }
-        else if (lha > 173 || rha > 173) {
-          trackMistake("Hips too low");
+        else if (lha > 177 || rha > 177) {
+          trackMistake("Lower your hips!");
           errorMessage = "Lower your hips!";
         }
         else if (lsa > 70 || rsa > 70){
-          trackMistake("Elbows too wide");
+          trackMistake("Bring your elbows closer");
           errorMessage = "Bring your elbows closer";
         }
         else if (lsa < 20 || rsa < 20){
-          trackMistake("Elbows too close");
+          trackMistake("Widen your elbows");
           errorMessage = "Widen your elbows";
         }
         if (errorMessage) return [pushupCounter, errorMessage];
@@ -1276,17 +1493,16 @@
     }
 
     function terminateWorkout() {
-      if (confirm('Are you sure you want to terminate the workout?')) {
-        workoutStarted = false;
-        isResting = false;
-        document.getElementById('rest-timer').classList.remove('active');
-        document.getElementById('terminate-workout').classList.remove('active');
-        saveWorkoutSummary();
-        // Stop the camera when terminating workout
-        if (camera) {
-          camera.stop();
-        }
+      workoutStarted = false;
+      isResting = false;
+      document.getElementById('rest-timer').classList.remove('active');
+      document.getElementById('terminate-workout').classList.remove('active');
+      saveWorkoutSummary();
+      // Stop the camera when terminating workout
+      if (camera) {
+        camera.stop();
       }
+      
     }
 
     function onResults(results) {
@@ -1301,18 +1517,35 @@
         drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
         drawLandmarks(ctx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2});
 
-        if (!workoutStarted) {
+        if (!workoutStarted && disclaimerShown) {
           showWorkoutConfig();
-        } else if (!isResting) {
+        } else if (!isResting && workoutStarted) {
           if (currentExercise === "pushup") {
             [reps, feedback] = countPushup(results.poseLandmarks);
           } else {
             [reps, feedback] = countSquat(results.poseLandmarks);
           }
           document.getElementById("rep-count").innerText = `Reps: ${reps}/${repsPerSet}`;
+          updateRecap(); // Update recap with current reps in real-time
           if (feedback) {
             document.getElementById("feedback").innerText = feedback;
-            speak(feedback);
+            
+            // Check if this is an error message and if its count is a multiple of the threshold
+            if (mistakes[feedback]) {
+              const errorCount = mistakes[feedback];
+              const threshold = getErrorThreshold(feedback);
+              // debug prints
+              // console.log("mistakes[feedback]", mistakes[feedback]);
+              // console.log("errorCount", errorCount);
+              // console.log("threshold", threshold);
+              
+              if (errorCount % threshold === 0) {
+                speak(feedback);
+              }
+            } else {
+              // For non-error messages (like "Rep counted!" or "Good! Go up!"), always speak
+              speak(feedback);
+            }
           }
           checkSetCompletion();
         }
@@ -1346,9 +1579,9 @@
       showWorkoutConfig();
     });
 
-    // Show workout config when page loads
+    // Show disclaimer when page loads
     window.addEventListener('load', () => {
-      showWorkoutConfig();
+      showDisclaimer();
       setupSpeechRecognition();
     });
 
@@ -1374,7 +1607,7 @@
           console.error('Error in pose detection:', error);
           // Restart camera if there's an error
           camera.stop();
-          setTimeout(() => camera.start(), 1000);
+          setTimeout(() => startCamera(), 1000);
         }
       },
       width: 400,
@@ -1386,15 +1619,41 @@
       console.error('Camera error:', e);
       // Try to restart the camera
       camera.stop();
-      setTimeout(() => camera.start(), 1000);
+      setTimeout(() => startCamera(), 1000);
     });
 
-    // Start camera
-    camera.start().catch(error => {
-      console.error('Failed to start camera:', error);
-      // Try to restart after a delay
-      setTimeout(() => camera.start(), 1000);
-    });
+    function startCamera() {
+      // Only start camera if disclaimer has been closed
+      if (disclaimerShown) {
+        camera.start().catch(error => {
+          console.error('Failed to start camera:', error);
+          // Try to restart after a delay
+          setTimeout(() => startCamera(), 1000);
+        });
+      }
+    }
+
+    // Disclaimer popup functionality is handled by closeDisclaimer() function
+
+    function closeDisclaimer() {
+      document.getElementById('disclaimer-popup').classList.remove('active');
+      disclaimerShown = true;
+      // Now show workout config
+      showWorkoutConfig();
+      // Start camera after disclaimer is closed
+      if (!cameraStarted) {
+        startCamera();
+        cameraStarted = true;
+      }
+    }
+
+    function showDisclaimer() {
+      document.getElementById('disclaimer-popup').classList.add('active');
+      // Start voice control for disclaimer
+      if (!isListening) {
+        toggleVoiceControl();
+      }
+    }
   </script>
 </body>
 </html>

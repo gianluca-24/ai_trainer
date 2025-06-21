@@ -25,16 +25,35 @@
             margin: 0;
         }
 
-        .logout-btn {
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .logout-btn, .instruction-btn {
             color: white;
             text-decoration: none;
             padding: 0.5rem 1rem;
             border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .logout-btn {
             background: #dc3545;
+        }
+
+        .instruction-btn {
+            background: #17a2b8;
         }
 
         .logout-btn:hover {
             background: #c82333;
+        }
+
+        .instruction-btn:hover {
+            background: #138496;
         }
 
         .profile-container {
@@ -250,40 +269,153 @@
             color: #721c24;
         }
 
-        /* Modal */
-        #editModal {
+        /* Modal Styles */
+        #disclaimer-modal {
             display: none;
             position: fixed;
             z-index: 1000;
-            top: 0;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            overflow: hidden;
+            background-color: rgba(0,0,0,0.5);
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            max-width: 400px;
-            margin: 10% auto;
+        .disclaimer-content {
             position: relative;
+            background-color: #fefefe;
+            margin: 20px auto;
+            padding: 0;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
-        .modal-content h3 {
-            margin-top: 0;
+        .disclaimer-content::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .modal-content input,
-        .modal-content label {
-            width: 100%;
-            display: block;
-            margin-bottom: 1rem;
+        .disclaimer-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
         }
 
-        .modal-content button {
-            margin-right: 1rem;
+        .disclaimer-content::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .disclaimer-content::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .disclaimer-content h2 {
+            color: #333;
+            margin: 0;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            background: #fefefe;
+            padding: 20px;
+            z-index: 2;
+            border-bottom: 1px solid #eee;
+        }
+
+        .instructions-container {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .disclaimer-buttons {
+            text-align: center;
+            position: sticky;
+            bottom: 0;
+            background: #fefefe;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            margin: 0;
+            z-index: 2;
+        }
+
+        .okay-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .okay-btn:hover {
+            background: #45a049;
+        }
+
+        .instruction-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .instruction-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .voice-commands {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .voice-command {
+            background: #e8f5e9;
+            color: #1b5e20;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .voice-commands-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+        }
+
+        .voice-command-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .voice-command-item .voice-command {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .voice-command-item p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
         }
 
         /* Flex layout for Global | Middle | Personal Best */
@@ -375,7 +507,10 @@
 <body>
     <div class="header">
         <h2>PIErO: Push-up Interactive Error Optimizer</h2>
-        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        <div class="header-buttons">
+            <button class="instruction-btn" onclick="showInstructions()">Instructions</button>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
     </div>
 
     <div class="profile-container">
@@ -486,6 +621,68 @@
             </form>
         </div>
     </div>
+
+    <!-- Disclaimer Modal -->
+    <div id="disclaimer-modal">
+        <div class="disclaimer-content">
+            <h2>Workout Instructions</h2>
+            <div class="instructions-container">
+                <div class="instruction-section">
+                    <h3>📹 Camera Positioning</h3>
+                    <p>Position your camera at a <strong>45-degree angle</strong> to capture your full body during the workout. Make sure you have enough space to perform the exercises safely.</p>
+                </div>
+                <div class="instruction-section">
+                    <h3>🎤 Voice Commands</h3>
+                    <p>During workout configuration:</p>
+                    <div class="voice-commands-list">
+                        <div class="voice-command-item">
+                            <span class="voice-command">repetitions</span>
+                            <p>Set the number of repetitions for each set (1-100). Example: "six repetitions" or "ten repetitions"</p>
+                        </div>
+                        <div class="voice-command-item">
+                            <span class="voice-command">sets</span>
+                            <p>Set the number of sets for your workout (1-10). Example: "sets three" or "five sets"</p>
+                        </div>
+                        <div class="voice-command-item">
+                            <span class="voice-command">timer</span>
+                            <p>Set the rest time between sets (60-300 seconds). Example: "timer ninety" or "60 seconds timer"</p>
+                        </div>
+                        <div class="voice-command-item">
+                            <span class="voice-command">start</span>
+                            <p>Begin the workout with the current configuration</p>
+                        </div>
+                        <div class="voice-command-item">
+                            <span class="voice-command">cancel</span>
+                            <p>Cancel the workout setup and return to profile</p>
+                        </div>
+                    </div>
+                    <p>During rest periods:</p>
+                    <div class="voice-commands-list">
+                        <div class="voice-command-item">
+                            <span class="voice-command">good</span>
+                            <p>Keep the current workout settings for the next set</p>
+                        </div>
+                        <div class="voice-command-item">
+                            <span class="voice-command">easy</span>
+                            <p>Add one more set to your workout if it feels too easy</p>
+                        </div>
+                        <div class="voice-command-item">
+                            <span class="voice-command">difficult</span>
+                            <p>Reduce the number of repetitions by 2 for remaining sets if too challenging</p>
+                        </div>
+                        <div class="voice-command-item">
+                            <span class="voice-command">terminate</span>
+                            <p>End the workout session and save your progress</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="disclaimer-buttons">
+                <button class="okay-btn" onclick="closeInstructions()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openModal(type) {
             const modal = document.getElementById('editModal');
@@ -495,7 +692,18 @@
             document.getElementById('personalFields').style.display = type === 'personal' ? 'block' : 'none';
             document.getElementById('physicalFields').style.display = type === 'physical' ? 'block' : 'none';
         }
-        function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+        
+        function closeModal() { 
+            document.getElementById('editModal').style.display = 'none'; 
+        }
+
+        function showInstructions() {
+            document.getElementById('disclaimer-modal').style.display = 'block';
+        }
+
+        function closeInstructions() {
+            document.getElementById('disclaimer-modal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
