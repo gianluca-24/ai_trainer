@@ -1249,6 +1249,8 @@
       const rha = angle(rs, rh, rk);
       const lka = angle(lh, lk, la);
       const rka = angle(rh, rk, ra);
+      const lla = angle(lw, le, ls); // Left elbow angle
+      const rla = angle(rw, re, rs); // Right elbow angle
       const lsa = angle(le, ls, lh); // Left shoulder angle
       const rsa = angle(re, rs, rh); // Right shoulder angle
 
@@ -1394,11 +1396,8 @@
           trackMistake("Lower your hips!");
           errorMessage = "Lower your hips!";
         }
-        else if (lsa > 70 || rsa > 70){
-          trackMistake("Bring your elbows closer");
-          errorMessage = "Bring your elbows closer";
-        }
-        else if (lsa < 20 || rsa < 20){
+        
+        else if (lla < 15 || rla < 15){
           trackMistake("Widen your elbows");
           errorMessage = "Widen your elbows";
         }
