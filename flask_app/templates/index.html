@@ -973,11 +973,11 @@
       // Set Factor: 1 + 0.1 * (completedSets - 1)
       const setFactor = 1 + 0.1 * (completedSets - 1);
 
-      // Error Penalty: e^(-0.1 * totalErrors)
-      const errorPenalty = Math.exp(-0.1 * totalErrors);
+      // Error Penalty: e^(-0.05 * totalErrors)
+      const errorPenalty = Math.exp(-0.05 * totalErrors);
 
-      // Miss Penalty: e^(-0.2 * missedSets)
-      const missPenalty = Math.exp(-0.2 * actualMissedSets);
+      // Miss Penalty: e^(-0.1 * missedSets)
+      const missPenalty = Math.exp(-0.1 * actualMissedSets);
 
       // Superset Bonus: 1 + 0.2 * supersets
       const supersets = Object.values(completedReps).filter(reps => reps > repsPerSet).length;
@@ -985,7 +985,7 @@
 
       // Final Score: Base score * set factor * error penalty * miss penalty * superset bonus
       const baseScore = repsPerMinute * 10; // Multiply by 10 to get a more readable number
-      const workoutScore = Math.round(baseScore * setFactor * errorPenalty * missPenalty * supersetBonus);
+      const workoutScore = Math.max(15, Math.round(baseScore * setFactor * errorPenalty * missPenalty * supersetBonus));
 
       console.log('Score calculation:', {
         baseScore,
