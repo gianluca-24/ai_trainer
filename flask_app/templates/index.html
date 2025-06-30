@@ -1391,12 +1391,12 @@
         } else {
           // Check if hips are too high or too low
           if (lha < 165 || rha < 165) {
-            trackMistake("Raise your hips!");
-            errorMessage = "Raise your hips!";
-          } 
-          else if (lha > 177 || rha > 177) {
             trackMistake("Lower your hips!");
             errorMessage = "Lower your hips!";
+          } 
+          else if (lha > 177 || rha > 177) {
+            trackMistake("Raise your hips!");
+            errorMessage = "Raise your hips!";
           } 
           else {
             // Fallback for other alignment issues
@@ -1556,7 +1556,7 @@
         // Check if workout config popup is active
         const configPopupActive = document.getElementById('workout-config').classList.contains('active');
         
-        if (!workoutStarted && disclaimerShown && !configPopupActive) {
+        if (!workoutStarted && disclaimerShown && !configPopupActive && !isResting) {
           showWorkoutConfig();
         } else if (!isResting && workoutStarted && !configPopupActive) {
           if (currentExercise === "pushup") {
